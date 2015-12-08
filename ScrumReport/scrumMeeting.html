@@ -1,0 +1,72 @@
+﻿<!---------------------------------------------------------------------
+  <copyright file="scrumMeeting.html">
+        This code is licensed under the MIT License.
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+        ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+        TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+       PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+</copyright>
+ <summary>Html page for Scrum report extension</summary>
+ --------------------------------------------------------------------->
+
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Scrum Report</title>
+    <script src="sdk/scripts/VSS.SDK.js"></script>
+</head>
+<body style="overflow-y:auto">
+    <script type="text/javascript">
+        // Initialize the VSS sdk
+        VSS.init({
+            setupModuleLoader: true,
+            explicitNotifyLoaded: true,
+            usePlatformScripts: true,
+            usePlatformStyles: true,
+            moduleLoaderConfig: {
+                paths: {
+                    "Scripts": "scripts"
+                }
+            }
+        });
+
+        // Wait for the SDK to be initialized
+        VSS.ready(function () {
+            require(["Scripts/app"], function (app) {
+            });
+
+        });
+        function GetDateToDay() {
+            var monthNames = [
+                "January", "February", "March",
+                "April", "May", "June", "July",
+                "August", "September", "October",
+                "November", "December"
+            ];
+
+            var date = new Date();
+            var day = date.getDate();
+            var monthIndex = date.getMonth();
+            var year = date.getFullYear();
+
+
+            return day + ' ' + monthNames[monthIndex] + ' ' + year;
+        }
+
+    </script>
+
+    <h1 style="margin:10px">Scrum Report for <span id="dateinfo"></span></h1>
+
+
+    <div id="content" style="margin: 20px 10px 10px 10px;"></div>
+
+    <script type="text/javascript">
+        VSS.notifyLoadSucceeded();
+       document.getElementById("dateinfo").innerHTML = GetDateToDay();
+
+    </script>
+</body>
+</html>
