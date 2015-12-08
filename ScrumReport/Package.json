@@ -1,8 +1,7 @@
 {
   "manifestVersion": 1,
-  "namespace": "VSO-Scrum-Report",
   "version": "1.1",
-  "Id": "ScrumReport",
+  "Id": "VSO-Scrum-Report",
   "name": "Scrum Report",
   "description": "Keep track with the team's progress with a scrum report.",
   "publisher": "MikaelAndVlatko",
@@ -10,6 +9,11 @@
   "provider": {
     "name": "Mikael Krief and Vlatko Ivanovski"
   },
+  "targets": [
+        {
+            "id": "Microsoft.VisualStudio.Services"
+        }
+    ],
   "tags": [
     "scrum",
     "report"
@@ -58,7 +62,7 @@
 
   "links": {
     "support": {
-      "uri": "http://aka.ms/vsarcontact"
+      "uri": "https://github.com/mikaelkrief/VSTS-Extension-ScrumReport"
     }
   },
 
