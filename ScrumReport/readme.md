@@ -1,4 +1,4 @@
-#Welcome to Visual Studio Online Extensions!
+#Welcome to Scrum Report Visual Studio Team Services Extensions!
 
 ###This project template was put together to help you get started quickly with VSO extension development.  The following components are included:
 
@@ -15,7 +15,7 @@
 
 ####Thanks for choosing this project template.  Candid feedback is always welcome!
 
-Josh
+
 
 Vlatko Ivanovski
-Sinergija
+Mikael Krief
