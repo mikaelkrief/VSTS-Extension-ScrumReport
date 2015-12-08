@@ -5,6 +5,7 @@ This extension is based on a query named "Scrum report" that is created by the e
 
 ## Steps ##
 
+1.Install the extension into your Visual Studio Team Services account see https://marketplace.visualstudio.com/items/MikaelAndVlatko.VSO-Scrum-Report
 1. Connect to your team project.
 1. Select **WORK**.
 1. Select the tab **Scrum report**.
