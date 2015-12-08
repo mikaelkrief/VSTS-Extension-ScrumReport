@@ -17,5 +17,4 @@ Install the extension into your Visual Studio Team Services account from https:/
 
 
 
-Vlatko Ivanovski
-Mikael Krief
+Vlatko Ivanovski AND Mikael Krief
