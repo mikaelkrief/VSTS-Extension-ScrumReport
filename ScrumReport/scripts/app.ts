@@ -10,8 +10,7 @@
 // <summary>TypeScript file for Scrum report extension</summary>
 //---------------------------------------------------------------------
 
-/// <reference path='ref/VSS.d.ts' />
-/// <reference path='ref/jquery.d.ts' />
+/// <reference path='../node_modules/vss-sdk/typings/VSS.d.ts' />
 
 
 
@@ -32,12 +31,23 @@ import Q = require("q");
 var QueryName = "Shared Queries/Scrum Report";
 var CurrentProject = VSS.getWebContext().project.name;
 
+var projectTemplate: string;
+
+function GetProjectTemplate(): IPromise<string> {
+    var deferred = Q.defer<string>();
+    var client = Core_Client.getClient();
+    client.getProject(VSS.getWebContext().project.id, true).then((q: Core_Contracts.TeamProject) => {
+        var processT = q.capabilities["processTemplate"];
+        deferred.resolve(processT["templateName"]);
+    });
+
+    return deferred.promise;
+}
+
 //retrieve list of all Wi id that as return by the query
 function GetListWiId(): IPromise<Work_WorkItemTrackingContracts.WorkItem[]> {
 
-    var client = Service.getClient(RestClient.WorkItemTrackingHttpClient);
-
-
+    var client = RestClient.getClient();
 
     var p1 = Q.Promise((resolve: any, reject) => {
         //get the query id
@@ -74,12 +84,24 @@ function GetListWiId(): IPromise<Work_WorkItemTrackingContracts.WorkItem[]> {
 
 //create the query
 function CreateQuery() {
-    var client = Service.getClient(RestClient.WorkItemTrackingHttpClient);
+    var client = RestClient.getClient();
+    var queryWiql: string;
+    switch (projectTemplate) {
+        case "Scrum":
+            queryWiql = "SELECT [System.Id], [System.WorkItemType], [System.Title], [System.AssignedTo], [System.State], [System.Tags], [Microsoft.VSTS.Common.StateChangeDate] FROM WorkItems WHERE [System.TeamProject] = @project and [System.WorkItemType] <> '' and [Microsoft.VSTS.Common.StateChangeDate] >= @today - 1 and [System.State] IN ('In Progress', 'Done', 'New', 'Open') ORDER BY [System.AssignedTo], [System.Id]";
+            break;
+        case "Agile":
+            queryWiql = "SELECT [System.Id], [System.WorkItemType], [System.Title], [System.AssignedTo], [System.State], [System.Tags], [Microsoft.VSTS.Common.StateChangeDate] FROM WorkItems WHERE [System.TeamProject] = @project and [System.WorkItemType] <> '' and [Microsoft.VSTS.Common.StateChangeDate] >= @today - 1 and [System.State] IN ('Active', 'Closed', 'New') ORDER BY [System.AssignedTo], [System.Id]";
+            break;
+        case "CMMI":
+            queryWiql = "SELECT [System.Id], [System.WorkItemType], [System.Title], [System.AssignedTo], [System.State], [System.Tags], [Microsoft.VSTS.Common.StateChangeDate] FROM WorkItems WHERE [System.TeamProject] = @project and [System.WorkItemType] <> '' and [Microsoft.VSTS.Common.StateChangeDate] >= @today - 1 and [System.State] IN ('Active', 'Closed', 'Proposed') ORDER BY [System.AssignedTo], [System.Id]";
+            break;
+    }
 
     var newQuery = <Work_WorkItemTrackingContracts.QueryHierarchyItem>{};
     newQuery.name = "Scrum Report";
     newQuery.path = "Shared Queries/";
-    newQuery.wiql = "SELECT [System.Id], [System.WorkItemType], [System.Title], [System.AssignedTo], [System.State], [System.Tags], [Microsoft.VSTS.Common.StateChangeDate] FROM WorkItems WHERE [System.TeamProject] = @project and [System.WorkItemType] <> '' and [Microsoft.VSTS.Common.StateChangeDate] >= @today - 1 and [System.State] IN ('In Progress', 'Done', 'New', 'Open') ORDER BY [System.AssignedTo], [System.Id] ";
+    newQuery.wiql = queryWiql;
     newQuery.queryType = Work_WorkItemTrackingContracts.QueryType.Flat;
 
     client.createQuery(newQuery, CurrentProject, "Shared Queries/").then((t) => {
@@ -119,7 +141,7 @@ function GetAllTeamMembers(wi: IPromise<Work_WorkItemTrackingContracts.WorkItem[
 
 function GetMemberAvatar() {
     var deferred = Q.defer<Core_Contacts.IdentityRef[]>();
-    var client = Service.getClient(Core_Client.CoreHttpClient);
+    var client = Core_Client.getClient();
     var project = VSS.getWebContext().project.id;
     client.getTeams(project).then((val) => {
         client.getTeamMembers(VSS.getWebContext().project.id, VSS.getWebContext().team.id).then((t) => {
@@ -129,8 +151,11 @@ function GetMemberAvatar() {
     return deferred.promise;
 }
 
-
 //Main
+//Get the template project
+GetProjectTemplate().then((pt: string) => {
+    projectTemplate = pt;
+});
 var listeIdWi: IPromise<Work_WorkItemTrackingContracts.WorkItem[]>;
 listeIdWi = GetListWiId();
 
@@ -139,7 +164,19 @@ Q.all([GetAllTeamMembers(listeIdWi), GetMemberAvatar()]).then((values: any[]) =>
     var tm: string[] = values[0];
     var avatars: Core_Contacts.IdentityRef[] = values[1];
 
-    var wiState: string[] = ["Done", "In Progress", "New", "Open"]
+    //Filter by state
+    var wiState: string[];
+    switch (projectTemplate) {
+        case "Scrum":
+            wiState = ["Done", "In Progress", "New", "Open"]; //Open for Impediment
+            break;
+        case "Agile":
+            wiState = ["Closed", "Active", "New"];
+            break;
+        case "CMMI":
+            wiState = ["Closed", "Active", "Proposed"];
+            break;
+    }
 
     listeIdWi.then((wiRef: Work_WorkItemTrackingContracts.WorkItem[]) => {
         var resultHTML: string = "";
