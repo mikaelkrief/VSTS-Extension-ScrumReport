@@ -26,12 +26,8 @@ module.exports = function (grunt) {
 				command: "tsd link",
                 stdout: true,
                 stderr: true
-			},
-            publish: {
-                command: "vset publish -s settings.vset.json",
-                stdout: true,
-                stderr: true
-            }
+			}
+          
         },
         copy: {
             main: {

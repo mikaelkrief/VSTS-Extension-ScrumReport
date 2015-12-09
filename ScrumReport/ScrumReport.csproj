@@ -53,9 +53,6 @@
   <ItemGroup>
     <Content Include="overview.md" />
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="settings.vset.json" />
-  </ItemGroup>
   <ItemGroup />
   <ItemGroup>
     <Content Include="package.json" />
