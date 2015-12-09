@@ -1,0 +1,10 @@
+﻿{
+"package": {
+		"manifestGlobs": ["vss-extension.json"]
+	},
+	"publish": {
+		"galleryUrl": "https://marketplace.visualstudio.com/",
+    "token": "mbjtprctczalt3xcvtska6flwurswvssrd3u2mjtdlkwuh3lkkzq",
+    "publisher": "KriefMikael"
+	}
+}

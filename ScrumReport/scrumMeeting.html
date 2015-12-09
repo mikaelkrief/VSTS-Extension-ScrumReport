@@ -16,7 +16,7 @@
 <head>
     <meta charset="utf-8" />
     <title>Scrum Report</title>
-    <script src="sdk/scripts/VSS.SDK.js"></script>
+    <script src="scripts/VSS.SDK.js"></script>
 </head>
 <body style="overflow-y:auto">
     <script type="text/javascript">
@@ -25,12 +25,7 @@
             setupModuleLoader: true,
             explicitNotifyLoaded: true,
             usePlatformScripts: true,
-            usePlatformStyles: true,
-            moduleLoaderConfig: {
-                paths: {
-                    "Scripts": "scripts"
-                }
-            }
+            usePlatformStyles: true
         });
 
         // Wait for the SDK to be initialized
