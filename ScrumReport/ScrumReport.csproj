@@ -30,7 +30,9 @@
     <Content Include="gruntfile.js" />
     <Content Include="images\image1.png" />
     <Content Include="images\image2.png" />
+    <Content Include="images\preview.png" />
     <Content Include="images\squareicon.png" />
+    <Content Include="indexWidget.html" />
     <Content Include="Licence\MIT-1.txt" />
     <Content Include="scripts\VSS.SDK.js" />
     <Content Include="scrumMeeting.html" />
@@ -38,12 +40,15 @@
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="scripts\app.ts" />
+    <TypeScriptCompile Include="scripts\appWidget.ts" />
+    <TypeScriptCompile Include="scripts\configuration.ts" />
     <TypeScriptCompile Include="typings\jquery\jquery.d.ts" />
     <TypeScriptCompile Include="typings\knockout\knockout.d.ts" />
     <TypeScriptCompile Include="typings\q\q.d.ts" />
     <TypeScriptCompile Include="typings\tsd.d.ts" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="scrumreportwidgetConfiguration.html" />
     <Content Include="vss-extension.json" />
     <Content Include="packages.config" />
   </ItemGroup>

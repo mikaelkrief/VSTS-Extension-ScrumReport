@@ -12,6 +12,11 @@ module.exports = function (grunt) {
                 stdout: true,
                 stderr: true
             },
+            packagedev: {
+                command: "tfx extension create --manifest-globs vss-extension-dev.json",
+                stdout: true,
+                stderr: true
+            },
             update: {
                 command: "npm up --save-dev",
                 stdout: true,

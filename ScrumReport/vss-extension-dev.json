@@ -10,10 +10,10 @@
     "name": "Mikael Krief"
   },
   "targets": [
-        {
-            "id": "Microsoft.VisualStudio.Services"
-        }
-    ],
+    {
+      "id": "Microsoft.VisualStudio.Services"
+    }
+  ],
   "tags": [
     "scrum",
     "report"
@@ -39,9 +39,17 @@
     {
       "path": "css",
       "addressable": true
+    },
+    {
+      "path": "indexWidget.html",
+      "addressable": true
+    },
+    {
+      "path": "scrumreportwidgetConfiguration.html",
+      "addressable": true
     }
   ],
- 
+
 
   "content": {
     "details": {
@@ -80,6 +88,45 @@
         "name": "Test Scrum Report",
         "order": 99,
         "uri": "scrumMeeting.html"
+      }
+    },
+    {
+      "id": "scrumreportwidget",
+      "type": "ms.vss-dashboards-web.widget",
+      "targets": [
+        "ms.vss-dashboards-web.widget-catalog",
+        "KriefMikael.VSO-Scrum-Report.scrumreportwidget.Configuration"
+      ],
+      "properties": {
+        "name": "Scrum report Widget",
+        "description": "View scrum report summary",
+        "uri": "indexWidget.html",
+        "previewImageUrl": "images/preview.png",
+        "supportedSizes": [
+          {
+            "rowSpan": 1,
+            "columnSpan": 3
+          },
+          {
+            "rowSpan": 2,
+            "columnSpan": 3
+          },
+          {
+            "rowSpan": 3,
+            "columnSpan": 3
+          }
+        ],
+        "supportedScopes": [ "project_team" ]
+      }
+    },
+    {
+      "id": "scrumreportwidget.Configuration",
+      "type": "ms.vss-dashboards-web.widget-configuration",
+      "targets": [ "ms.vss-dashboards-web.widget-configuration" ],
+      "properties": {
+        "name": "Scrum report Widget Configuration",
+        "description": "Configure Scrum report Widget",
+        "uri": "scrumreportwidgetconfiguration.html"
       }
     }
   ]

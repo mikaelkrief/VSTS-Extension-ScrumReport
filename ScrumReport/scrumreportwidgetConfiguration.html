@@ -1,0 +1,25 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+</head>
+<body>
+    <div class="container">
+    </div>
+
+    <script src="scripts/VSS.SDK.js"></script>
+
+
+    <script type="text/javascript">
+        VSS.init({
+            explicitNotifyLoaded: true,
+            setupModuleLoader: true,
+            usePlatformScripts: true,
+            usePlatformStyles: true
+        });
+
+        VSS.ready(function () {
+            require(["scripts/configuration"], function (configuration) { });
+        });
+    </script>
+</body>
+</html>
