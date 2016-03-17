@@ -61,7 +61,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="web.config" />
-    <Content Include="vss-extension-dev.json" />
+    <Content Include="vss-extension.json" />
     <None Include="web.Debug.config">
       <DependentUpon>web.config</DependentUpon>
     </None>
