@@ -19,3 +19,15 @@ You can change the "Scrum report" query to display changes of WIs daily to weekl
 1. The report appears on the content page.
 	- A grid appears for each team member and the state their task is in
 	- Double click on a row to open the WI
+
+## The Widget ##
+
+Add the Widget on your dashboard and view the Scrum report summary.
+
+![View scrum report Widget](images/widget.png)
+
+The link "View Scrum report" open in the new windows the extension page.
+
+By default the widget display 4 users, if there are more users you can increase the number of rows, changing the height of the widget.
+
+![View scrum report Widget config](images/widgetConfig.png)

@@ -1,4 +1,15 @@
-﻿/// <reference path='../typings/tsd.d.ts' />
+﻿//---------------------------------------------------------------------
+// <copyright file="app.ts">
+//    This code is licensed under the MIT License.
+//    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF 
+//    ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED 
+//    TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+//    PARTICULAR PURPOSE AND NONINFRINGEMENT.
+// </copyright>
+// <summary>TypeScript file for Widget configuration Scrum report extension</summary>
+//---------------------------------------------------------------------
+
+/// <reference path='../typings/tsd.d.ts' />
 "use strict";
 
 

@@ -32,6 +32,8 @@
     <Content Include="images\image2.png" />
     <Content Include="images\preview.png" />
     <Content Include="images\squareicon.png" />
+    <Content Include="images\Widget.png" />
+    <Content Include="images\widgetConfig.png" />
     <Content Include="indexWidget.html" />
     <Content Include="Licence\MIT-1.txt" />
     <Content Include="scripts\VSS.SDK.js" />
