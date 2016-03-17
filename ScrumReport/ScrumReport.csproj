@@ -51,7 +51,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="scrumreportwidgetConfiguration.html" />
-    <Content Include="vss-extension.json" />
     <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
