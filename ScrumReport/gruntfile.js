@@ -12,6 +12,11 @@ module.exports = function (grunt) {
                 stdout: true,
                 stderr: true
             },
+            packagedev: {
+                command: "tfx extension create --manifest-globs vss-extension-dev.json",
+                stdout: true,
+                stderr: true
+            },
             update: {
                 command: "npm up --save-dev",
                 stdout: true,
@@ -36,11 +41,27 @@ module.exports = function (grunt) {
                   { expand: true, flatten: true, src: ['node_modules/vss-sdk/lib/VSS.SDK.js'], dest: 'scripts/', filter: 'isFile' }
                 ]
             }
+        },
+        typescript: {
+            compile: {
+                src: ['scripts/*.ts'],
+                dest: 'scripts',
+                options: {
+                    module: 'amd',
+                    target: 'es5',
+                    sourceMap: true,
+                    declaration: true,
+                    references: ["typings/**/*.d.ts"]
+                }
+            }
         }
     });
 
+    
+
     grunt.loadNpmTasks("grunt-exec");
     grunt.loadNpmTasks("grunt-contrib-copy");
+    grunt.loadNpmTasks("grunt-typescript");
   
-
+    grunt.registerTask('build', ['typescript:compile', 'exec:package']);
 };

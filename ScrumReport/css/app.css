@@ -19,5 +19,20 @@ span {
 }
 
 h1 {
-    margin:10px;
+    margin: 10px;
 }
+
+.worklinks-container {
+    margin-left: 8px;
+    margin-top: 10px;
+    margin-bottom: -4px;
+}
+
+
+    .worklinks-container .header {
+        font-size: 16px;
+        color: #424245;
+        cursor: default;
+        margin-top: -5px;
+        margin-bottom: 8px;
+    }

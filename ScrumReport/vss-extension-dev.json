@@ -2,18 +2,18 @@
   "manifestVersion": 1,
   "version": "1.1",
   "Id": "VSO-Scrum-Report",
-  "name": "Scrum Report",
+  "name": "Test Scrum Report",
   "description": "Keep track with the team's progress with a scrum report.",
-  "publisher": "MikaelAndVlatko",
-  "public": true,
+  "publisher": "KriefMikael",
+  "public": false,
   "provider": {
-    "name": "Mikael Krief and Vlatko Ivanovski"
+    "name": "Mikael Krief"
   },
   "targets": [
-        {
-            "id": "Microsoft.VisualStudio.Services"
-        }
-    ],
+    {
+      "id": "Microsoft.VisualStudio.Services"
+    }
+  ],
   "tags": [
     "scrum",
     "report"
@@ -49,7 +49,7 @@
       "addressable": true
     }
   ],
- 
+
 
   "content": {
     "details": {
@@ -85,7 +85,7 @@
         "ms.vss-work-web.work-hub-group"
       ],
       "properties": {
-        "name": "Scrum Report",
+        "name": "Test Scrum Report",
         "order": 99,
         "uri": "scrumMeeting.html"
       }
