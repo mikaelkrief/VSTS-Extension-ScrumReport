@@ -1,6 +1,6 @@
 {
   "manifestVersion": 1,
-  "version": "1.1",
+  "version": "1.8",
   "Id": "VSO-Scrum-Report",
   "name": "Scrum Report",
   "description": "Keep track with the team's progress with a scrum report.",
@@ -95,7 +95,7 @@
       "type": "ms.vss-dashboards-web.widget",
       "targets": [
         "ms.vss-dashboards-web.widget-catalog",
-        "KriefMikael.VSO-Scrum-Report.scrumreportwidget.Configuration"
+        "MikaelAndVlatko.VSO-Scrum-Report.scrumreportwidget.Configuration"
       ],
       "properties": {
         "name": "Scrum report Widget",
