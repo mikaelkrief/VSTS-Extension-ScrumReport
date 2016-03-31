@@ -1,0 +1,135 @@
+{
+  "manifestVersion": 1,
+  "version": "1.8",
+  "Id": "Test-VSO-Scrum-Report",
+  "name": "Test Scrum Report",
+  "description": "Keep track with the team's progress with a scrum report.",
+  "publisher": "DevMikaelKrief",
+  "public": false,
+  "provider": {
+    "name": "Mikael Krief and Vlatko Ivanovski"
+  },
+  "targets": [
+    {
+      "id": "Microsoft.VisualStudio.Services"
+    }
+  ],
+  "tags": [
+    "scrum",
+    "report"
+  ],
+  "scopes": [
+    "vso.work",
+    "vso.work_write"
+  ],
+
+  "files": [
+    {
+      "path": "scripts",
+      "addressable": true
+    },
+    {
+      "path": "images",
+      "addressable": true
+    },
+    {
+      "path": "scrumMeeting.html",
+      "addressable": true
+    },
+    {
+      "path": "css",
+      "addressable": true
+    },
+    {
+      "path": "indexWidget.html",
+      "addressable": true
+    },
+    {
+      "path": "scrumreportwidgetConfiguration.html",
+      "addressable": true
+    }
+  ],
+
+
+  "content": {
+    "details": {
+      "path": "overview.md"
+    },
+    "license": {
+      "path": "Licence/MIT-1.txt"
+    }
+  },
+  "branding": {
+    "color": "rgb(220, 235, 252)",
+    "theme": "light"
+  },
+
+  "links": {
+    "support": {
+      "uri": "https://github.com/mikaelkrief/VSTS-Extension-ScrumReport"
+    }
+  },
+
+  "icons": {
+    "default": "images/squareicon.png"
+  },
+  "categories": [
+    "Plan and track"
+  ],
+  "contributions": [
+    {
+      "id": "DevMikaelKrief.ScrumReport",
+      "type": "ms.vss-web.hub",
+      "description": "Adds a 'Scrum report' hub to the Work hub group.",
+      "targets": [
+        "ms.vss-work-web.work-hub-group"
+      ],
+      "properties": {
+        "name": "Test Scrum Report",
+        "order": 99,
+        "uri": "scrumMeeting.html"
+      }
+    },
+    {
+      "id": "scrumreportwidget",
+      "type": "ms.vss-dashboards-web.widget",
+      "targets": [
+        "ms.vss-dashboards-web.widget-catalog",
+        "DevMikaelKrief.VSO-Scrum-Report.scrumreportwidget.Configuration"
+      ],
+      "properties": {
+        "name": "Scrum report Widget",
+        "description": "View scrum report summary",
+        "uri": "indexWidget.html",
+        "previewImageUrl": "images/preview.png",
+        "supportedSizes": [
+          {
+            "rowSpan": 1,
+            "columnSpan": 3
+          },
+          {
+            "rowSpan": 2,
+            "columnSpan": 3
+          },
+          {
+            "rowSpan": 3,
+            "columnSpan": 3
+          }
+        ],
+        "supportedScopes": [ "project_team" ]
+      }
+    },
+    {
+      "id": "scrumreportwidget.Configuration",
+      "type": "ms.vss-dashboards-web.widget-configuration",
+      "targets": [ "ms.vss-dashboards-web.widget-configuration" ],
+      "properties": {
+        "name": "Scrum report Widget Configuration",
+        "description": "Configure Scrum report Widget",
+        "uri": "scrumreportwidgetconfiguration.html"
+      }
+    }
+  ]
+
+
+}

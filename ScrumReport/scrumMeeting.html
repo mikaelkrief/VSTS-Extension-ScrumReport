@@ -33,7 +33,6 @@
         // Wait for the SDK to be initialized
         VSS.ready(function () {
 
-           
 
             require(["VSS/Controls", "VSS/Controls/StatusIndicator", "Scripts/app"], function (control, wait, app) {
 
@@ -48,7 +47,7 @@
 
                 var scrumReport = new app.ScrumReport();
                 scrumReport.Load(waitIndicator);
-
+                
                 VSS.notifyLoadSucceeded();
             });
 
@@ -72,7 +71,7 @@
 
     </script>
 
-
+  
     <div id="page-container" class="hub-view explorer">
         <div class="hub-title" style="position: relative !important">
             <div id="header">Scrum Report for <span id="dateinfo"></span></div>
