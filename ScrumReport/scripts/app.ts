@@ -51,7 +51,7 @@ export class ScrumReport {
     }
 
     //retrieve list of all Wi id that as return by the query
-    public GetListWiId(): IPromise<Work_WorkItemTrackingContracts.WorkItem[]> {
+    public GetListWiId(waitIndicator: any): IPromise<Work_WorkItemTrackingContracts.WorkItem[]> {
 
         var client = RestClient.getClient();
 
@@ -78,10 +78,16 @@ export class ScrumReport {
             },
                 function (r) {
                     console.log(r);
+                
                     if (r.message.indexOf("TF401243") == 0) {//if the query is not created
                         //TODO: if the query is not created => create the query
-                        this.CreateQuery();
+                     
+                        var newscrumreport = new ScrumReport();
+                        newscrumreport.CreateQuery(waitIndicator);
                         document.getElementById("content").innerHTML = "<strong>The query 'Scrum Report' as created in the root on Shared Queries folder.<br />Refresh this page for view the result.</strong>";
+                        if (waitIndicator != undefined) {
+                            waitIndicator.endWait();
+                        }
                     }
                 });
         });
@@ -89,38 +95,49 @@ export class ScrumReport {
     }
 
     //create the query
-    public CreateQuery() {
+    public CreateQuery(waitIndicator: any) {
         var client = RestClient.getClient();
         var queryWiql: string;
-        switch (this.projectTemplate) {
-            case "Scrum":
-                queryWiql = "SELECT [System.Id], [System.WorkItemType], [System.Title], [System.AssignedTo], [System.State], [System.Tags], [Microsoft.VSTS.Common.StateChangeDate] FROM WorkItems WHERE [System.TeamProject] = @project and [System.WorkItemType] <> '' and [Microsoft.VSTS.Common.StateChangeDate] >= @today - 1 and [System.State] IN ('In Progress', 'Done', 'New', 'Open') ORDER BY [System.AssignedTo], [System.Id]";
-                break;
-            case "Agile":
-                queryWiql = "SELECT [System.Id], [System.WorkItemType], [System.Title], [System.AssignedTo], [System.State], [System.Tags], [Microsoft.VSTS.Common.StateChangeDate] FROM WorkItems WHERE [System.TeamProject] = @project and [System.WorkItemType] <> '' and [Microsoft.VSTS.Common.StateChangeDate] >= @today - 1 and [System.State] IN ('Active', 'Closed', 'New') ORDER BY [System.AssignedTo], [System.Id]";
-                break;
-            case "CMMI":
-                queryWiql = "SELECT [System.Id], [System.WorkItemType], [System.Title], [System.AssignedTo], [System.State], [System.Tags], [Microsoft.VSTS.Common.StateChangeDate] FROM WorkItems WHERE [System.TeamProject] = @project and [System.WorkItemType] <> '' and [Microsoft.VSTS.Common.StateChangeDate] >= @today - 1 and [System.State] IN ('Active', 'Closed', 'Proposed') ORDER BY [System.AssignedTo], [System.Id]";
-                break;
-        }
+        var newscrumreport = new ScrumReport();
 
-        var newQuery = <Work_WorkItemTrackingContracts.QueryHierarchyItem>{};
-        newQuery.name = "Scrum Report";
-        newQuery.path = "Shared Queries/";
-        newQuery.wiql = queryWiql;
-        newQuery.queryType = Work_WorkItemTrackingContracts.QueryType.Flat;
-
-        client.createQuery(newQuery, this.CurrentProject, "Shared Queries/").then((t) => {
-            //console.log(t);
-        },
-            function (f) {
-                document.getElementById("content").innerHTML = "Error the query is not found :<br />Create the query 'Scrum Report' on the root on Shared Queries folder";
+        Q.all([newscrumreport.GetProjectTemplate()]).then((values: any[]) => {
+            var template: string = values[0];
+           
+            switch (template) {
+                case "Scrum":
+                    queryWiql = "SELECT [System.Id], [System.WorkItemType], [System.Title], [System.AssignedTo], [System.State], [System.Tags], [Microsoft.VSTS.Common.StateChangeDate] FROM WorkItems WHERE [System.TeamProject] = @project and [System.WorkItemType] <> '' and [Microsoft.VSTS.Common.StateChangeDate] >= @today - 1 and [System.State] IN ('In Progress', 'Done', 'New', 'Open') ORDER BY [System.AssignedTo], [System.Id]";
+                    break;
+                case "Agile":
+                    queryWiql = "SELECT [System.Id], [System.WorkItemType], [System.Title], [System.AssignedTo], [System.State], [System.Tags], [Microsoft.VSTS.Common.StateChangeDate] FROM WorkItems WHERE [System.TeamProject] = @project and [System.WorkItemType] <> '' and [Microsoft.VSTS.Common.StateChangeDate] >= @today - 1 and [System.State] IN ('Active', 'Closed', 'New') ORDER BY [System.AssignedTo], [System.Id]";
+                    break;
+                case "CMMI":
+                    queryWiql = "SELECT [System.Id], [System.WorkItemType], [System.Title], [System.AssignedTo], [System.State], [System.Tags], [Microsoft.VSTS.Common.StateChangeDate] FROM WorkItems WHERE [System.TeamProject] = @project and [System.WorkItemType] <> '' and [Microsoft.VSTS.Common.StateChangeDate] >= @today - 1 and [System.State] IN ('Active', 'Closed', 'Proposed') ORDER BY [System.AssignedTo], [System.Id]";
+                    break;
             }
-        );
+
+            var newQuery = <Work_WorkItemTrackingContracts.QueryHierarchyItem>{};
+            newQuery.name = "Scrum Report";
+            newQuery.path = "Shared Queries/";
+            newQuery.wiql = queryWiql;
+            newQuery.queryType = Work_WorkItemTrackingContracts.QueryType.Flat;
+            
+            client.createQuery(newQuery, this.CurrentProject, "Shared Queries/").then((t) => {
+                //console.log(t);
+            }
+
+                ,
+                function (f) {
+                    document.getElementById("content").innerHTML = "Error the query is not found :<br />Create the query 'Scrum Report' on the root on Shared Queries folder";
+                    if (waitIndicator != undefined) {
+                        waitIndicator.endWait();
+                    }
+                }
+            );
+        });
     }
 
     //construct array with distinct member with as in the result of the query
-    public GetAllTeamMembers(wi: IPromise<Work_WorkItemTrackingContracts.WorkItem[]>): IPromise<string[]> {
+    public GetAllTeamMembers(wi: IPromise<Work_WorkItemTrackingContracts.WorkItem[]>, waitIndicator: any): IPromise<string[]> {
         var deferred = Q.defer<string[]>();
         var ret: string[] = [];
         this.listeIdWi.then((wiRef: Work_WorkItemTrackingContracts.WorkItem[]) => {
@@ -136,6 +153,34 @@ export class ScrumReport {
                         ret.push(w.fields["System.AssignedTo"]);
                     }
                 }
+            });
+            deferred.resolve(ret);
+        }, function (r) {
+            //here the message that indicate no results
+            document.getElementById("content").innerHTML = "There is no information for the current Report for this day.";
+
+            if (waitIndicator != undefined) {
+                waitIndicator.endWait();
+            }
+
+        });
+        return deferred.promise;
+    }
+
+    public GetAllStates(wi: IPromise<Work_WorkItemTrackingContracts.WorkItem[]>): IPromise<string[]> {
+        var deferred = Q.defer<string[]>();
+        var ret: string[] = [];
+        this.listeIdWi.then((wiRef: Work_WorkItemTrackingContracts.WorkItem[]) => {
+
+
+
+            wiRef.forEach((w: Work_WorkItemTrackingContracts.WorkItem) => {
+
+
+                if (ret.indexOf(w.fields["System.State"]) < 0) {
+                    ret.push(w.fields["System.State"]);
+                }
+
             });
             deferred.resolve(ret);
         }, function (r) {
@@ -159,20 +204,18 @@ export class ScrumReport {
 
     public Load(waitIndicator: any) {
         var me = this;
-        //Get the template project
-        me.GetProjectTemplate().then((pt: string) => {
-            me.projectTemplate = pt;
-        });
-
-        me.listeIdWi = me.GetListWiId();
 
 
-        Q.all([me.GetAllTeamMembers(me.listeIdWi), me.GetMemberAvatar()]).then((values: any[]) => {
+        me.listeIdWi = me.GetListWiId(waitIndicator);
+
+
+        Q.all([me.GetAllTeamMembers(me.listeIdWi, waitIndicator), me.GetMemberAvatar(), me.GetAllStates(me.listeIdWi)]).then((values: any[]) => {
             var tm: string[] = values[0];
             var avatars: Core_Contacts.IdentityRef[] = values[1];
-
+            var states: string[] = values[2];
+           
             //Filter by state
-            var wiState: string[];
+            /*var wiState: string[];
             switch (me.projectTemplate) {
                 case "Scrum":
                     wiState = ["Done", "In Progress", "New", "Open"]; //Open for Impediment
@@ -183,7 +226,7 @@ export class ScrumReport {
                 case "CMMI":
                     wiState = ["Closed", "Active", "Proposed"];
                     break;
-            }
+            }*/
 
             me.listeIdWi.then((wiRef: Work_WorkItemTrackingContracts.WorkItem[]) => {
                 var resultHTML: string = "";
@@ -201,7 +244,7 @@ export class ScrumReport {
 
                     var counter2 = 0;
                     //for each wi state
-                    wiState.forEach((_wit: string) => {
+                    states.forEach((_wit: string) => {
                 
                         //list for the member and by type
                         var filtreByType = filterByMember.filter((e: Work_WorkItemTrackingContracts.WorkItem) => { return e.fields["System.State"] == _wit });
@@ -302,11 +345,11 @@ export class ScrumReport {
 
 
         //Get list of Work items
-       
-        me.listeIdWi = me.GetListWiId();
+
+        me.listeIdWi = me.GetListWiId(undefined);
 
 
-        Q.all<any[]>([me.GetAllTeamMembers(me.listeIdWi), me.GetMemberAvatar()]).then((values: any[]) => {
+        Q.all<any[]>([me.GetAllTeamMembers(me.listeIdWi, undefined), me.GetMemberAvatar()]).then((values: any[]) => {
             var tm: string[] = values[0];
             var avatars: Core_Contacts.IdentityRef[] = values[1];
 
@@ -388,7 +431,7 @@ export class ScrumReport {
 }
 
 
-       
+
 export class ScrumReportSumByUser {
 
     public userName: string;
@@ -396,6 +439,17 @@ export class ScrumReportSumByUser {
     public nbInProgress: number;
     public nbNew: number;
     public nbOpen: number;
+
+    constructor() {
+    }
+
+}
+
+export class ScrumReportWIState {
+
+    public state: string;
+    public name: string;
+    public order: number;
 
     constructor() {
     }
