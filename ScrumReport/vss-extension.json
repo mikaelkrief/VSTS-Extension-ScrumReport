@@ -1,6 +1,6 @@
 {
   "manifestVersion": 1,
-  "version": "1.8",
+  "version": "1.9",
   "Id": "VSO-Scrum-Report",
   "name": "Scrum Report",
   "description": "Keep track with the team's progress with a scrum report.",
@@ -11,7 +11,7 @@
   },
   "targets": [
     {
-      "id": "Microsoft.VisualStudio.Services"
+      "id": "Microsoft.VisualStudio.Services.Cloud"
     }
   ],
   "tags": [

@@ -210,3 +210,14 @@ FakesAssemblies/
 GeneratedArtifacts/
 _Pvt_Extensions/
 ModelManifest.xml
+/ScrumReport/scripts/configuration.js.map
+/ScrumReport/scripts/configuration.js
+/ScrumReport/scripts/configuration.d.ts
+/ScrumReport/scripts/appWidget.js.map
+/ScrumReport/scripts/appWidget.js
+/ScrumReport/scripts/appWidget.d.ts
+/ScrumReport/scripts/app.js.map
+/ScrumReport/scripts/app.js
+/ScrumReport/scripts/app.d.ts
+/ScrumReport/MikaelAndVlatko.VSO-Scrum-Report-1.8.vsix
+/ScrumReport/MikaelAndVlatko.VSO-Scrum-Report-1.9.vsix
