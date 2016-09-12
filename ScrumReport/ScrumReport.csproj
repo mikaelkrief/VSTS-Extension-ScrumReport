@@ -44,6 +44,8 @@
     <TypeScriptCompile Include="scripts\app.ts" />
     <TypeScriptCompile Include="scripts\appWidget.ts" />
     <TypeScriptCompile Include="scripts\configuration.ts" />
+    <TypeScriptCompile Include="scripts\ref\tfs.d.ts" />
+    <TypeScriptCompile Include="scripts\ref\vss.d.ts" />
     <TypeScriptCompile Include="typings\jquery\jquery.d.ts" />
     <TypeScriptCompile Include="typings\knockout\knockout.d.ts" />
     <TypeScriptCompile Include="typings\q\q.d.ts" />
