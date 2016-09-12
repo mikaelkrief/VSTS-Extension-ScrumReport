@@ -9,7 +9,7 @@
 // <summary>TypeScript file for Widget configuration Scrum report extension</summary>
 //---------------------------------------------------------------------
 
-/// <reference path='../typings/tsd.d.ts' />
+/// <reference path="../typings/tsd.d.ts" />
 "use strict";
 
 

@@ -9,8 +9,8 @@
 // <summary>TypeScript file for Widget Scrum report extension</summary>
 //---------------------------------------------------------------------
 
-/// <reference path='../node_modules/vss-sdk/typings/VSS.d.ts' />
 
+/// <reference path="../typings/tsd.d.ts" />
 import ScrumReport = require("scripts/app");
 
 

@@ -10,7 +10,7 @@
 // <summary>TypeScript file for Scrum report extension</summary>
 //---------------------------------------------------------------------
 
-/// <reference path='../node_modules/vss-sdk/typings/VSS.d.ts' />
+/// <reference path="../typings/tsd.d.ts" />
 "use strict";
 
 
