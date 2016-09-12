@@ -1,6 +1,6 @@
 {
   "manifestVersion": 1,
-  "version": "1.9",
+  "version": "1.9.2",
   "Id": "VSO-Scrum-Report",
   "name": "Scrum Report",
   "description": "Keep track with the team's progress with a scrum report.",
@@ -126,7 +126,7 @@
       "properties": {
         "name": "Scrum report Widget Configuration",
         "description": "Configure Scrum report Widget",
-        "uri": "scrumreportwidgetconfiguration.html"
+        "uri": "scrumreportwidgetConfiguration.html"
       }
     }
   ]
