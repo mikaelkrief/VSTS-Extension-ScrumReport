@@ -11,26 +11,11 @@ module.exports = function (grunt) {
                 stdout: true,
                 stderr: true
             },
-            packagedev: {
-                command: "tfx extension create --manifest-globs vss-extension-dev.json --publisher MikaelKrief",
-                stdout: true,
-                stderr: true
-            },
             update: {
                 command: "npm up --save-dev",
                 stdout: true,
                 stderr: true
-            },
-			tsdinit:{
-				command: "tsd install jquery q knockout",
-                stdout: true,
-                stderr: true
-			},
-			tsdlink:{
-				command: "tsd link",
-                stdout: true,
-                stderr: true
-			}
+            }
           
         },
         copy: {
