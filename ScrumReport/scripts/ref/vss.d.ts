@@ -1,5 +1,5 @@
-// Type definitions for Microsoft Visual Studio Services v100.20160601.1948
-// Project: http://www.visualstudio.com/integrate/extensions/overview
+// Type definitions for Microsoft Visual Studio Services v101.20160627.0901
+// Project: https://www.visualstudio.com/integrate/extensions/overview
 // Definitions by: Microsoft <vsointegration@microsoft.com>
 
 /// <reference path='../../typings/knockout/knockout.d.ts' />
@@ -29,6 +29,16 @@ interface IVssAjaxOptions {
      * If true, the progress indicator will be shown while the request is executing. Defaults to true.
      */
     showProgressIndicator?: boolean;
+
+    /**
+     * Current session id. Defaults to pageContext.diagnostics.sessionId.
+     */
+    sessionId?: string;
+
+    /**
+     * Current command for activity logging.
+     */
+    command?: string;
 }
 
 /**
@@ -339,6 +349,17 @@ interface IExtensionInitializationOptions {
 }
 
 /**
+* Storage that can be leveraged by sandboxed extension content. The host frame will
+* store this data in localStorage for the extension's publisher id.
+*/
+interface ISandboxedStorage {
+    /**
+    * Used by the VSS.SDK to shim localStorage for sandboxed content - for a given publisher.
+    */
+    localStorage?: IDictionaryStringTo<string>;
+}
+
+/**
 * Data passed from the host to an extension frame via the initial handshake
 */
 interface IHostHandshakeData {
@@ -362,6 +383,11 @@ interface IHostHandshakeData {
     * The contribution that caused the extension frame to be loaded.
     */
     contribution: Contribution;
+
+    /**
+    * Initial sandboxed-storage data for the current extension's publisher. 
+    */
+    sandboxedStorage?: ISandboxedStorage;
 }
 
 /**
@@ -917,6 +943,23 @@ interface IContributedTab {
      */
     isDisabled?: (context?: any) => boolean | IPromise<boolean>;
 }
+
+/**
+ * @exemptedapi
+ */
+interface HubResult extends Hub {
+    hubs?: Hub[];
+
+    targetHubId?: string;
+    getHubs?(context: any): Hub[] | IPromise<Hub[]>;
+}
+
+/**
+ * @exemptedapi
+ */
+interface IHubsProvider {
+    getHubs(context: any): HubResult | IPromise<HubResult>;
+}
 //----------------------------------------------------------
 // Copyright (C) Microsoft Corporation. All rights reserved.
 //----------------------------------------------------------
@@ -1380,6 +1423,14 @@ interface DiagnosticsContext {
     * Whether or not to enable static content bundling. This is on by default but the value can be overridden with a TFS-BUNDLING cookie or registry entry.
     */
     bundlingEnabled: boolean;
+    /**
+    * True if the CDN feature flag is enabled.
+    */
+    cdnAvailable: boolean;
+    /**
+    * True if the CDN feature flag is enabled and the user has not disabled CDN with a cookie.
+    */
+    cdnEnabled: boolean;
     debugMode: boolean;
     isDevFabric: boolean;
     sessionId: string;
@@ -1728,6 +1779,7 @@ interface HostContext {
 interface Hub {
     builtIn: boolean;
     groupId: string;
+    icon: string;
     id: string;
     isSelected: boolean;
     name: string;
@@ -1741,6 +1793,7 @@ interface Hub {
 interface HubGroup {
     builtIn: boolean;
     hasHubs: boolean;
+    icon: string;
     id: string;
     name: string;
     order: any;
@@ -2660,6 +2713,10 @@ declare module "VSS/Accounts/Contracts" {
          * This account is part of deletion batch and scheduled for deletion.
          */
         Deleted = 3,
+        /**
+         * This account is not mastered locally and has physically moved.
+         */
+        Moved = 4,
     }
     export enum AccountType {
         Personal = 0,
@@ -2723,15 +2780,7 @@ declare module "VSS/Accounts/Contracts" {
         PendingDisabled = 6,
     }
     export var TypeInfo: {
-        Account: {
-            fields: any;
-        };
-        AccountCreateInfoInternal: {
-            fields: any;
-        };
-        AccountLicenseInfo: {
-            fields: any;
-        };
+        Account: any;
         AccountLicenseSource: {
             enumValues: {
                 "none": number;
@@ -2755,15 +2804,6 @@ declare module "VSS/Accounts/Contracts" {
                 "vsEarlyAdopter": number;
             };
         };
-        AccountNameAvailability: {
-            fields: any;
-        };
-        AccountPreferencesInternal: {
-            fields: any;
-        };
-        AccountRegion: {
-            fields: any;
-        };
         AccountServiceRights: {
             enumValues: {
                 "standardLicense": number;
@@ -2778,6 +2818,7 @@ declare module "VSS/Accounts/Contracts" {
                 "enabled": number;
                 "disabled": number;
                 "deleted": number;
+                "moved": number;
             };
         };
         AccountType: {
@@ -2786,9 +2827,7 @@ declare module "VSS/Accounts/Contracts" {
                 "organization": number;
             };
         };
-        AccountUser: {
-            fields: any;
-        };
+        AccountUser: any;
         AccountUserStatus: {
             enumValues: {
                 "none": number;
@@ -3190,18 +3229,13 @@ declare module "VSS/Authentication/Contracts" {
         validTo: Date;
     }
     export var TypeInfo: {
-        CustomerIntelligenceEvent: {
-            fields: any;
-        };
         DelegatedAppTokenType: {
             enumValues: {
                 "session": number;
                 "app": number;
             };
         };
-        WebSessionToken: {
-            fields: any;
-        };
+        WebSessionToken: any;
     };
 }
 declare module "VSS/Authentication/RestClient" {
@@ -3407,6 +3441,10 @@ declare module "VSS/Commerce/Contracts" {
         /**
          * The offer / product name as defined by the publisher in Azure
          */
+        offerId: string;
+        /**
+         * The offer / product name as defined by the publisher in Azure
+         */
         offerName: string;
         /**
          * The id of the plan, which is usually in the format "{publisher}:{offer}:{plan}"
@@ -3424,6 +3462,10 @@ declare module "VSS/Commerce/Contracts" {
          * The publisher of the plan as defined by the publisher in Azure
          */
         publisher: string;
+        /**
+         * get/set publisher name
+         */
+        publisherName: string;
         /**
          * The number of users associated with the plan as defined in Azure
          */
@@ -3676,11 +3718,6 @@ declare module "VSS/Commerce/Contracts" {
         Legacy = 0,
         Bundle = 1,
         Extension = 2,
-    }
-    export enum MeterGroupType {
-        License = 0,
-        Build = 1,
-        LoadTest = 2,
     }
     export enum MeterRenewalFrequecy {
         None = 0,
@@ -4022,13 +4059,6 @@ declare module "VSS/Commerce/Contracts" {
          */
         resetDate: Date;
     }
-    export enum SubscriptionSource {
-        Normal = 0,
-        EnterpriseAgreement = 1,
-        Internal = 2,
-        Unknown = 3,
-        FreeTier = 4,
-    }
     export enum SubscriptionStatus {
         Unknown = 0,
         Active = 1,
@@ -4105,30 +4135,16 @@ declare module "VSS/Commerce/Contracts" {
                 "marketplace": number;
             };
         };
-        AzureOfferPlanDefinition: {
-            fields: any;
-        };
-        AzureRegion: {
-            fields: any;
-        };
         BillingProvider: {
             enumValues: {
                 "selfManaged": number;
                 "azureStoreManaged": number;
             };
         };
-        IOfferSubscription: {
-            fields: any;
-        };
-        ISubscriptionAccount: {
-            fields: any;
-        };
-        ISubscriptionResource: {
-            fields: any;
-        };
-        IUsageEventAggregate: {
-            fields: any;
-        };
+        IOfferSubscription: any;
+        ISubscriptionAccount: any;
+        ISubscriptionResource: any;
+        IUsageEventAggregate: any;
         MeterBillingState: {
             enumValues: {
                 "free": number;
@@ -4140,13 +4156,6 @@ declare module "VSS/Commerce/Contracts" {
                 "legacy": number;
                 "bundle": number;
                 "extension": number;
-            };
-        };
-        MeterGroupType: {
-            enumValues: {
-                "license": number;
-                "build": number;
-                "loadTest": number;
             };
         };
         MeterRenewalFrequecy: {
@@ -4164,17 +4173,12 @@ declare module "VSS/Commerce/Contracts" {
                 "deleted": number;
             };
         };
-        OfferMeter: {
-            fields: any;
-        };
+        OfferMeter: any;
         OfferMeterAssignmentModel: {
             enumValues: {
                 "explicit": number;
                 "implicit": number;
             };
-        };
-        OfferMeterPrice: {
-            fields: any;
         };
         OfferScope: {
             enumValues: {
@@ -4183,12 +4187,8 @@ declare module "VSS/Commerce/Contracts" {
                 "userAccount": number;
             };
         };
-        OfferSubscription: {
-            fields: any;
-        };
-        PurchasableOfferMeter: {
-            fields: any;
-        };
+        OfferSubscription: any;
+        PurchasableOfferMeter: any;
         PurchaseErrorReason: {
             enumValues: {
                 "none": number;
@@ -4243,18 +4243,7 @@ declare module "VSS/Commerce/Contracts" {
                 "maximumQuantityReached": number;
             };
         };
-        SubscriptionResource: {
-            fields: any;
-        };
-        SubscriptionSource: {
-            enumValues: {
-                "normal": number;
-                "enterpriseAgreement": number;
-                "internal": number;
-                "unknown": number;
-                "freeTier": number;
-            };
-        };
+        SubscriptionResource: any;
         SubscriptionStatus: {
             enumValues: {
                 "unknown": number;
@@ -4264,9 +4253,7 @@ declare module "VSS/Commerce/Contracts" {
                 "unregistered": number;
             };
         };
-        UsageEvent: {
-            fields: any;
-        };
+        UsageEvent: any;
     };
 }
 declare module "VSS/Commerce/RestClient" {
@@ -4579,9 +4566,7 @@ declare module "VSS/Common/Constants/Platform" {
     export module WebPlatformFeatureFlags {
         var VisualStudioServicesContribution: string;
         var VisualStudioServicesContributionUnSecureBrowsers: string;
-        var VisualStudioServicesContributionFramework: string;
         var ClientSideErrorLogging: string;
-        var UseCDN: string;
     }
 }
 declare module "VSS/Common/Contracts/FormInput" {
@@ -4826,15 +4811,9 @@ declare module "VSS/Common/Contracts/FormInput" {
                 "uri": number;
             };
         };
-        InputDescriptor: {
-            fields: any;
-        };
-        InputFilter: {
-            fields: any;
-        };
-        InputFilterCondition: {
-            fields: any;
-        };
+        InputDescriptor: any;
+        InputFilter: any;
+        InputFilterCondition: any;
         InputFilterOperator: {
             enumValues: {
                 "equals": number;
@@ -4852,21 +4831,7 @@ declare module "VSS/Common/Contracts/FormInput" {
                 "textArea": number;
             };
         };
-        InputValidation: {
-            fields: any;
-        };
-        InputValue: {
-            fields: any;
-        };
-        InputValues: {
-            fields: any;
-        };
-        InputValuesError: {
-            fields: any;
-        };
-        InputValuesQuery: {
-            fields: any;
-        };
+        InputValidation: any;
     };
 }
 declare module "VSS/Common/Contracts/Platform" {
@@ -5197,6 +5162,7 @@ declare module "VSS/Common/Contracts/Platform" {
     export interface Hub {
         builtIn: boolean;
         groupId: string;
+        icon: string;
         id: string;
         isSelected: boolean;
         name: string;
@@ -5209,6 +5175,7 @@ declare module "VSS/Common/Contracts/Platform" {
     export interface HubGroup {
         builtIn: boolean;
         hasHubs: boolean;
+        icon: string;
         id: string;
         name: string;
         order: any;
@@ -6041,6 +6008,20 @@ declare module "VSS/Context" {
 declare module "VSS/Contributions/Contracts" {
     import VSS_Common_Contracts = require("VSS/WebApi/Contracts");
     import VSS_Gallery_Contracts = require("VSS/Gallery/Contracts");
+    export interface AcquisitionOperation {
+        /**
+         * State of the the AcquisitionOperation for the current user
+         */
+        operationState: AcquisitionOperationState;
+        /**
+         * AcquisitionOperationType: install, request, buy, etc...
+         */
+        operationType: AcquisitionOperationType;
+        /**
+         * Optional reason to justify current state. Typically used with Disallow state.
+         */
+        reason: string;
+    }
     export enum AcquisitionOperationState {
         /**
          * Not allowed to use this AcquisitionOperation
@@ -6080,6 +6061,27 @@ declare module "VSS/Contributions/Contracts" {
          * No action found
          */
         None = 5,
+    }
+    /**
+     * Market item acquisition options (install, buy, etc) for an installation target.
+     */
+    export interface AcquisitionOptions {
+        /**
+         * Default Operation for the ItemId in this target
+         */
+        defaultOperation: AcquisitionOperation;
+        /**
+         * The item id that this options refer to
+         */
+        itemId: string;
+        /**
+         * Operations allowed for the ItemId in this target
+         */
+        operations: AcquisitionOperation[];
+        /**
+         * The target that this options refer to
+         */
+        target: string;
     }
     /**
      * An individual contribution made by an extension
@@ -6210,29 +6212,6 @@ declare module "VSS/Contributions/Contracts" {
          * Value is an arbitrary/custom object
          */
         Object = 512,
-    }
-    export enum ContributionQueryOptions {
-        None = 0,
-        /**
-         * Include the direct contributions that have the ids queried.
-         */
-        IncludeSelf = 16,
-        /**
-         * Include the contributions that directly target the contributions queried.
-         */
-        IncludeChildren = 32,
-        /**
-         * Include the contributions from the entire sub-tree targetting the contributions queried.
-         */
-        IncludeSubTree = 96,
-        /**
-         * Include the contribution being queried as well as all contributions that target them recursively.
-         */
-        IncludeAll = 112,
-        /**
-         * INTERNAL ONLY: This flag is used to control how contribution nodes are managed internally. If the caller supplied this flag it will be ignored.
-         */
-        ProduceNodes = 256,
     }
     /**
      * A contribution type, given by a json schema
@@ -6592,6 +6571,10 @@ declare module "VSS/Contributions/Contracts" {
          */
         version: string;
     }
+    export interface InstalledExtensionQuery {
+        assetTypes: string[];
+        monikers: VSS_Gallery_Contracts.ExtensionIdentifier[];
+    }
     /**
      * The state of an installed extension
      */
@@ -6604,16 +6587,6 @@ declare module "VSS/Contributions/Contracts" {
          * The time at which this installation was last updated
          */
         lastUpdated: Date;
-    }
-    export enum RenderOprtions {
-        /**
-         * No optional rendering features will be enabled.
-         */
-        None = 0,
-        /**
-         * Performance metrics about the Render will be collected and returned. This includes details about the timing and sizes of response from each component of the pipeline.  This will slightly increase the cost of the rendering to track the metrics.
-         */
-        CollectPerformanceMetrics = 1,
     }
     /**
      * A request for an extension (to be installed or have a license assigned)
@@ -6674,6 +6647,7 @@ declare module "VSS/Contributions/Contracts" {
         version: string;
     }
     export var TypeInfo: {
+        AcquisitionOperation: any;
         AcquisitionOperationState: {
             enumValues: {
                 "disallow": number;
@@ -6691,18 +6665,8 @@ declare module "VSS/Contributions/Contracts" {
                 "none": number;
             };
         };
-        Contribution: {
-            fields: any;
-        };
-        ContributionBase: {
-            fields: any;
-        };
-        ContributionConstraint: {
-            fields: any;
-        };
-        ContributionPropertyDescription: {
-            fields: any;
-        };
+        AcquisitionOptions: any;
+        ContributionPropertyDescription: any;
         ContributionPropertyType: {
             enumValues: {
                 "unknown": number;
@@ -6718,61 +6682,17 @@ declare module "VSS/Contributions/Contracts" {
                 "object": number;
             };
         };
-        ContributionQueryOptions: {
-            enumValues: {
-                "none": number;
-                "includeSelf": number;
-                "includeChildren": number;
-                "includeSubTree": number;
-                "includeAll": number;
-                "produceNodes": number;
-            };
-        };
-        ContributionType: {
-            fields: any;
-        };
-        DataProviderContext: {
-            fields: any;
-        };
-        DataProviderQuery: {
-            fields: any;
-        };
-        DataProviderResult: {
-            fields: any;
-        };
-        ExtensionAuditAction: {
-            fields: any;
-        };
-        ExtensionAuditLog: {
-            fields: any;
-        };
-        ExtensionAuditLogEntry: {
-            fields: any;
-        };
-        ExtensionDataCollection: {
-            fields: any;
-        };
-        ExtensionDataCollectionQuery: {
-            fields: any;
-        };
-        ExtensionEventCallback: {
-            fields: any;
-        };
-        ExtensionEventCallbackCollection: {
-            fields: any;
-        };
+        ContributionType: any;
+        ExtensionAuditLog: any;
+        ExtensionAuditLogEntry: any;
         ExtensionFlags: {
             enumValues: {
                 "builtIn": number;
                 "trusted": number;
             };
         };
-        ExtensionManifest: {
-            fields: any;
-        };
-        ExtensionRequest: {
-            fields: any;
-        };
+        ExtensionManifest: any;
+        ExtensionRequest: any;
         ExtensionRequestState: {
             enumValues: {
                 "open": number;
@@ -6780,9 +6700,7 @@ declare module "VSS/Contributions/Contracts" {
                 "rejected": number;
             };
         };
-        ExtensionState: {
-            fields: any;
-        };
+        ExtensionState: any;
         ExtensionStateFlags: {
             enumValues: {
                 "none": number;
@@ -6795,30 +6713,9 @@ declare module "VSS/Contributions/Contracts" {
                 "error": number;
             };
         };
-        InstalledExtension: {
-            fields: any;
-        };
-        InstalledExtensionState: {
-            fields: any;
-        };
-        RenderOprtions: {
-            enumValues: {
-                "none": number;
-                "collectPerformanceMetrics": number;
-            };
-        };
-        RequestedExtension: {
-            fields: any;
-        };
-        ResolvedDataProvider: {
-            fields: any;
-        };
-        Scope: {
-            fields: any;
-        };
-        SupportedExtension: {
-            fields: any;
-        };
+        InstalledExtension: any;
+        InstalledExtensionState: any;
+        RequestedExtension: any;
     };
 }
 declare module "VSS/Contributions/Controls" {
@@ -7086,9 +6983,10 @@ declare module "VSS/Contributions/Services" {
          * @param includeRootItems True to include the contributions with the specified ids
          * @param includeChildren True to include contributions that target the specified ids
          * @param recursive If true include targeting children recursively
+         * @param contributionType Optional type of contribution to filter by
          * @return IPromise<Contributions_Contracts.Contribution[]> Promise that is resolved when contributions are available.
          */
-        getContributions(ids: string[], includeRootItems: boolean, includeChildren: boolean, recursive?: boolean): IPromise<Contributions_Contracts.Contribution[]>;
+        getContributions(ids: string[], includeRootItems: boolean, includeChildren: boolean, recursive?: boolean, contributionType?: string): IPromise<Contributions_Contracts.Contribution[]>;
         /**
          * Contribution come from extensions and when the caller needs properties about the
          * extension the contribution came from, this method can be used to retrieve it.
@@ -8685,6 +8583,7 @@ declare module "VSS/Controls/Dialogs" {
          * Gets the current subtitle of the dialog
          */
         getSubtitle(): string;
+        centerDialog(): void;
         /**
          * Gets the current dialog result which will be used when ok button is clicked.
          *
@@ -9828,10 +9727,10 @@ declare module "VSS/Controls/Grids" {
         suppressRedraw?: boolean;
         keepSelection?: boolean;
         /**
-         * Specifies whether to use the modern bowtie styling (bowtie styles are in preview and subject to change).
+         * Specifies whether to use the legacy grid style rather than Bowtie.
          * @defaultvalue false
          */
-        useBowtieStyle?: boolean;
+        useLegacyStyle?: boolean;
         /**
          * @privateapi
          * Type of the formatter which is used for retrieving the content from the grid
@@ -10068,6 +9967,8 @@ declare module "VSS/Controls/Grids" {
         private _previousCanvasHeight;
         private _previousCanvasWidth;
         private _$popupMenuPinTarget;
+        private _showingContextMenu;
+        private _automaticContextMenuColumn;
         /**
          *  Offset height, that shifts the row boundaries up and determines whether the pointer is over a particular row or not
          *  e.g. An offset percentage (passed in by the consumer of the grid) of 50 shifts each row boundary up half the row height for the purposes of calculating whether the mouse
@@ -10101,7 +10002,7 @@ declare module "VSS/Controls/Grids" {
         _canvasWidth: number;
         _headerCanvas: any;
         _gutter: any;
-        _popupMenu: any;
+        _popupMenu: Menus.PopupMenu;
         _resetScroll: boolean;
         _ignoreScroll: boolean;
         _scrollTop: number;
@@ -10689,6 +10590,7 @@ declare module "VSS/Controls/Grids" {
          * @param includeNonDirtyRows
          */
         _updateViewport(includeNonDirtyRows?: boolean): void;
+        private _setContextMenuColumn();
         _cleanUpRows(): void;
         private _getGutterIconClass(rowIndex, dataIndex, expandedState, level);
         private _drawGutterCell(rowInfo, rowIndex, dataIndex, expandedState, level);
@@ -10986,6 +10888,7 @@ declare module "VSS/Controls/Header" {
     export class ContributableHeader<TOptions extends ContributableHeaderOptions> extends Controls.Control<TOptions> {
         initializeOptions(options?: ContributableHeaderOptions): void;
         protected renderContributions(): void;
+        protected filterContributions(contributions: Contributions_Contracts.Contribution[]): Contributions_Contracts.Contribution[];
         protected groupContributionsByAlignment(contributions: Contributions_Contracts.Contribution[]): IDictionaryStringTo<Contributions_Contracts.Contribution[]>;
         private renderContributedSection(contributions, selector);
     }
@@ -11362,6 +11265,21 @@ declare module "VSS/Controls/Menus" {
          * The id of the extension that contributed the menu item.
          */
         sourceExtensionId?: string;
+        /**
+         * Extra option overriding default settings
+         */
+        extraOptions?: any;
+        /**
+         * Determines whether clicking a menu item with children opens sub menu or not.
+         * @defaultValue true
+         */
+        clickOpensSubMenu?: boolean;
+        /**
+        *  Option to renders a split drop menu item (eg a chevron or triangle)
+        */
+        splitDropOptions?: ISplitDropMenuItemSpec;
+    }
+    export interface ISplitDropMenuItemSpec extends IMenuItemSpec {
     }
     export interface MenuBaseOptions {
         type: string;
@@ -12571,17 +12489,6 @@ declare module "VSS/Controls/Notifications" {
     }
     export class MessageAreaControl extends MessageAreaControlO<IMessageAreaControlOptions> {
     }
-    export class UnsupportedBrowserMessageControl extends Controls.BaseControl {
-        private _messageArea;
-        /**
-         * A message area control that displays a message to a user until they dismiss it.
-         */
-        constructor(options?: any);
-        /**
-         * Initialize the control, creating the message area and binding to the dismiss event
-         */
-        initialize(): void;
-    }
     export interface IInformationAreaControlOptions {
         caption?: string;
         expandedIconClass?: string;
@@ -13337,9 +13244,10 @@ declare module "VSS/Controls/Splitter" {
          * @param newSize New fixed side size in px.
          * @param suppressFireResize Determines whether to suppress firing resize event or not.
          * @param useAnimation Determines whether to use animation during resize or not.
+         * @param complete A callback function to notify that the resize operation completes.
          * @publicapi
          */
-        resize(newSize: any, suppressFireResize?: boolean, useAnimation?: boolean): void;
+        resize(newSize: any, suppressFireResize?: boolean, useAnimation?: boolean, complete?: Function): void;
         /**
          * Expand or collapse the splitter.
          *
@@ -15099,17 +15007,6 @@ declare module "VSS/DelegatedAuthorization/Contracts" {
         tokenType: string;
         validTo: Date;
     }
-    export enum AppSessionTokenError {
-        None = 0,
-        UserIdRequired = 1,
-        ClientIdRequired = 2,
-        InvalidUserId = 3,
-        InvalidUserType = 4,
-        AccessDenied = 5,
-        FailedToIssueAppSessionToken = 6,
-        InvalidClientId = 7,
-        AuthorizationIsNotSuccessfull = 8,
-    }
     export interface Authorization {
         accessIssued: Date;
         audience: string;
@@ -15177,14 +15074,7 @@ declare module "VSS/DelegatedAuthorization/Contracts" {
         JwtBearer = 1,
         RefreshToken = 2,
         Implicit = 3,
-    }
-    export enum HostAuthorizationError {
-        None = 0,
-        ClientIdRequired = 1,
-        AccessDenied = 2,
-        FailedToAuthorizeHost = 3,
-        ClientIdNotFound = 4,
-        InvalidClientId = 5,
+        ClientCredentials = 4,
     }
     export enum InitiationError {
         None = 0,
@@ -15234,33 +15124,6 @@ declare module "VSS/DelegatedAuthorization/Contracts" {
         AppToken = 5,
         Code = 6,
     }
-    export enum SessionTokenError {
-        None = 0,
-        DisplayNameRequired = 1,
-        InvalidDisplayName = 2,
-        InvalidValidTo = 3,
-        InvalidScope = 4,
-        UserIdRequired = 5,
-        InvalidUserId = 6,
-        InvalidUserType = 7,
-        AccessDenied = 8,
-        FailedToIssueAccessToken = 9,
-        InvalidClient = 10,
-        InvalidClientType = 11,
-        InvalidClientId = 12,
-        InvalidTargetAccounts = 13,
-        HostAuthorizationNotFound = 14,
-        AuthorizationNotFound = 15,
-        FailedToUpdateAccessToken = 16,
-        SourceNotSupported = 17,
-        InvalidSourceIP = 18,
-        InvalidSource = 19,
-        DuplicateHash = 20,
-    }
-    export enum SessionTokenType {
-        SelfDescribing = 0,
-        Compact = 1,
-    }
     export enum TokenError {
         None = 0,
         GrantTypeRequired = 1,
@@ -15298,34 +15161,11 @@ declare module "VSS/DelegatedAuthorization/Contracts" {
         tokenError: TokenError;
     }
     export var TypeInfo: {
-        AccessTokenResult: {
-            fields: any;
-        };
-        AppSessionTokenError: {
-            enumValues: {
-                "none": number;
-                "userIdRequired": number;
-                "clientIdRequired": number;
-                "invalidUserId": number;
-                "invalidUserType": number;
-                "accessDenied": number;
-                "failedToIssueAppSessionToken": number;
-                "invalidClientId": number;
-                "authorizationIsNotSuccessfull": number;
-            };
-        };
-        Authorization: {
-            fields: any;
-        };
-        AuthorizationDecision: {
-            fields: any;
-        };
-        AuthorizationDescription: {
-            fields: any;
-        };
-        AuthorizationDetails: {
-            fields: any;
-        };
+        AccessTokenResult: any;
+        Authorization: any;
+        AuthorizationDecision: any;
+        AuthorizationDescription: any;
+        AuthorizationDetails: any;
         AuthorizationError: {
             enumValues: {
                 "none": number;
@@ -15343,12 +15183,7 @@ declare module "VSS/DelegatedAuthorization/Contracts" {
                 "accessDenied": number;
             };
         };
-        AuthorizationGrant: {
-            fields: any;
-        };
-        AuthorizationScopeDescription: {
-            fields: any;
-        };
+        AuthorizationGrant: any;
         ClientType: {
             enumValues: {
                 "confidential": number;
@@ -15364,16 +15199,7 @@ declare module "VSS/DelegatedAuthorization/Contracts" {
                 "jwtBearer": number;
                 "refreshToken": number;
                 "implicit": number;
-            };
-        };
-        HostAuthorizationError: {
-            enumValues: {
-                "none": number;
-                "clientIdRequired": number;
-                "accessDenied": number;
-                "failedToAuthorizeHost": number;
-                "clientIdNotFound": number;
-                "invalidClientId": number;
+                "clientCredentials": number;
             };
         };
         InitiationError: {
@@ -15390,12 +15216,8 @@ declare module "VSS/DelegatedAuthorization/Contracts" {
                 "invalidRedirectUri": number;
             };
         };
-        RefreshTokenGrant: {
-            fields: any;
-        };
-        Registration: {
-            fields: any;
-        };
+        RefreshTokenGrant: any;
+        Registration: any;
         ResponseType: {
             enumValues: {
                 "none": number;
@@ -15405,37 +15227,6 @@ declare module "VSS/DelegatedAuthorization/Contracts" {
                 "signoutToken": number;
                 "appToken": number;
                 "code": number;
-            };
-        };
-        SessionTokenError: {
-            enumValues: {
-                "none": number;
-                "displayNameRequired": number;
-                "invalidDisplayName": number;
-                "invalidValidTo": number;
-                "invalidScope": number;
-                "userIdRequired": number;
-                "invalidUserId": number;
-                "invalidUserType": number;
-                "accessDenied": number;
-                "failedToIssueAccessToken": number;
-                "invalidClient": number;
-                "invalidClientType": number;
-                "invalidClientId": number;
-                "invalidTargetAccounts": number;
-                "hostAuthorizationNotFound": number;
-                "authorizationNotFound": number;
-                "failedToUpdateAccessToken": number;
-                "sourceNotSupported": number;
-                "invalidSourceIP": number;
-                "invalidSource": number;
-                "duplicateHash": number;
-            };
-        };
-        SessionTokenType: {
-            enumValues: {
-                "selfDescribing": number;
-                "compact": number;
             };
         };
         TokenError: {
@@ -15469,9 +15260,6 @@ declare module "VSS/DelegatedAuthorization/Contracts" {
                 "failedToIssueAccessToken": number;
                 "authorizationGrantScopeMissing": number;
             };
-        };
-        TokenPairResult: {
-            fields: any;
         };
     };
 }
@@ -16483,29 +16271,6 @@ declare module "VSS/ExtensionManagement/Contracts" {
          */
         Object = 512,
     }
-    export enum ContributionQueryOptions {
-        None = 0,
-        /**
-         * Include the direct contributions that have the ids queried.
-         */
-        IncludeSelf = 16,
-        /**
-         * Include the contributions that directly target the contributions queried.
-         */
-        IncludeChildren = 32,
-        /**
-         * Include the contributions from the entire sub-tree targetting the contributions queried.
-         */
-        IncludeSubTree = 96,
-        /**
-         * Include the contribution being queried as well as all contributions that target them recursively.
-         */
-        IncludeAll = 112,
-        /**
-         * INTERNAL ONLY: This flag is used to control how contribution nodes are managed internally. If the caller supplied this flag it will be ignored.
-         */
-        ProduceNodes = 256,
-    }
     /**
      * A contribution type, given by a json schema
      */
@@ -16881,16 +16646,6 @@ declare module "VSS/ExtensionManagement/Contracts" {
          */
         lastUpdated: Date;
     }
-    export enum RenderOprtions {
-        /**
-         * No optional rendering features will be enabled.
-         */
-        None = 0,
-        /**
-         * Performance metrics about the Render will be collected and returned. This includes details about the timing and sizes of response from each component of the pipeline.  This will slightly increase the cost of the rendering to track the metrics.
-         */
-        CollectPerformanceMetrics = 1,
-    }
     /**
      * A request for an extension (to be installed or have a license assigned)
      */
@@ -16950,9 +16705,7 @@ declare module "VSS/ExtensionManagement/Contracts" {
         version: string;
     }
     export var TypeInfo: {
-        AcquisitionOperation: {
-            fields: any;
-        };
+        AcquisitionOperation: any;
         AcquisitionOperationState: {
             enumValues: {
                 "disallow": number;
@@ -16970,21 +16723,8 @@ declare module "VSS/ExtensionManagement/Contracts" {
                 "none": number;
             };
         };
-        AcquisitionOptions: {
-            fields: any;
-        };
-        Contribution: {
-            fields: any;
-        };
-        ContributionBase: {
-            fields: any;
-        };
-        ContributionConstraint: {
-            fields: any;
-        };
-        ContributionPropertyDescription: {
-            fields: any;
-        };
+        AcquisitionOptions: any;
+        ContributionPropertyDescription: any;
         ContributionPropertyType: {
             enumValues: {
                 "unknown": number;
@@ -17000,61 +16740,17 @@ declare module "VSS/ExtensionManagement/Contracts" {
                 "object": number;
             };
         };
-        ContributionQueryOptions: {
-            enumValues: {
-                "none": number;
-                "includeSelf": number;
-                "includeChildren": number;
-                "includeSubTree": number;
-                "includeAll": number;
-                "produceNodes": number;
-            };
-        };
-        ContributionType: {
-            fields: any;
-        };
-        DataProviderContext: {
-            fields: any;
-        };
-        DataProviderQuery: {
-            fields: any;
-        };
-        DataProviderResult: {
-            fields: any;
-        };
-        ExtensionAuditAction: {
-            fields: any;
-        };
-        ExtensionAuditLog: {
-            fields: any;
-        };
-        ExtensionAuditLogEntry: {
-            fields: any;
-        };
-        ExtensionDataCollection: {
-            fields: any;
-        };
-        ExtensionDataCollectionQuery: {
-            fields: any;
-        };
-        ExtensionEventCallback: {
-            fields: any;
-        };
-        ExtensionEventCallbackCollection: {
-            fields: any;
-        };
+        ContributionType: any;
+        ExtensionAuditLog: any;
+        ExtensionAuditLogEntry: any;
         ExtensionFlags: {
             enumValues: {
                 "builtIn": number;
                 "trusted": number;
             };
         };
-        ExtensionManifest: {
-            fields: any;
-        };
-        ExtensionRequest: {
-            fields: any;
-        };
+        ExtensionManifest: any;
+        ExtensionRequest: any;
         ExtensionRequestState: {
             enumValues: {
                 "open": number;
@@ -17062,9 +16758,7 @@ declare module "VSS/ExtensionManagement/Contracts" {
                 "rejected": number;
             };
         };
-        ExtensionState: {
-            fields: any;
-        };
+        ExtensionState: any;
         ExtensionStateFlags: {
             enumValues: {
                 "none": number;
@@ -17077,37 +16771,13 @@ declare module "VSS/ExtensionManagement/Contracts" {
                 "error": number;
             };
         };
-        InstalledExtension: {
-            fields: any;
-        };
-        InstalledExtensionQuery: {
-            fields: any;
-        };
-        InstalledExtensionState: {
-            fields: any;
-        };
-        RenderOprtions: {
-            enumValues: {
-                "none": number;
-                "collectPerformanceMetrics": number;
-            };
-        };
-        RequestedExtension: {
-            fields: any;
-        };
-        ResolvedDataProvider: {
-            fields: any;
-        };
-        Scope: {
-            fields: any;
-        };
-        SupportedExtension: {
-            fields: any;
-        };
+        InstalledExtension: any;
+        InstalledExtensionState: any;
+        RequestedExtension: any;
     };
 }
 declare module "VSS/ExtensionManagement/RestClient" {
-    import Contracts = require("VSS/ExtensionManagement/Contracts");
+    import Contracts = require("VSS/Contributions/Contracts");
     import VSS_Gallery_Contracts = require("VSS/Gallery/Contracts");
     import VSS_WebApi = require("VSS/WebApi/RestClient");
     export class CommonMethods2To3 extends VSS_WebApi.VssHttpClient {
@@ -17358,6 +17028,14 @@ declare module "VSS/ExtensionManagement/RestClient" {
     export function getClient(options?: VSS_WebApi.IVssHttpClientOptions): ExtensionManagementHttpClient2_2;
 }
 declare module "VSS/FeatureAvailability/Contracts" {
+    /**
+     * ---------------------------------------------------------
+     * Generated file, DO NOT EDIT
+     * ---------------------------------------------------------
+     *
+     * See following wiki page for instructions on how to regenerate:
+     *   https://vsowiki.com/index.php?title=Rest_Client_Generation
+     */
     export interface FeatureFlag {
         description: string;
         effectiveState: string;
@@ -17371,14 +17049,6 @@ declare module "VSS/FeatureAvailability/Contracts" {
     export interface FeatureFlagPatch {
         state: string;
     }
-    export var TypeInfo: {
-        FeatureFlag: {
-            fields: any;
-        };
-        FeatureFlagPatch: {
-            fields: any;
-        };
-    };
 }
 declare module "VSS/FeatureAvailability/RestClient" {
     import Contracts = require("VSS/FeatureAvailability/Contracts");
@@ -17662,12 +17332,8 @@ declare module "VSS/FileContainer/Contracts" {
                 "none": number;
             };
         };
-        FileContainer: {
-            fields: any;
-        };
-        FileContainerItem: {
-            fields: any;
-        };
+        FileContainer: any;
+        FileContainerItem: any;
     };
 }
 declare module "VSS/FileContainer/RestClient" {
@@ -18251,12 +17917,6 @@ declare module "VSS/Gallery/Contracts" {
         statisticName: string;
         value: number;
     }
-    export enum ExtensionStatisticOperation {
-        None = 0,
-        Set = 1,
-        Increment = 2,
-        Decrement = 3,
-    }
     export interface ExtensionVersion {
         assetUri: string;
         files: ExtensionFile[];
@@ -18489,20 +18149,6 @@ declare module "VSS/Gallery/Contracts" {
          */
         flags: PublisherQueryFlags;
     }
-    export enum PublisherQueryFilterType {
-        /**
-         * The values are used as tags. All tags are treated as "OR" conditions with each other. There may be some value put on the number of matched tags from the query.
-         */
-        Tag = 1,
-        /**
-         * The Values are an PublisherName or fragment that is used to match other extension names.
-         */
-        DisplayName = 2,
-        /**
-         * The My Query filter is used to retrieve the set of publishers that I have access to publish extesions into. All Values are ignored and the calling user is used as the filter in this case.
-         */
-        My = 3,
-    }
     export enum PublisherQueryFlags {
         /**
          * None is used to retrieve only the basic publisher details.
@@ -18620,6 +18266,10 @@ declare module "VSS/Gallery/Contracts" {
          */
         rating: number;
         /**
+         * Reply, if any, for this review
+         */
+        reply: ReviewReply;
+        /**
          * Text description of the review
          */
         text: string;
@@ -18678,6 +18328,40 @@ declare module "VSS/Gallery/Contracts" {
          */
         UpdateReview = 2,
     }
+    export interface ReviewReply {
+        /**
+         * Id of the reply
+         */
+        id: number;
+        /**
+         * Flag for soft deletion
+         */
+        isDeleted: boolean;
+        /**
+         * Version of the product when the reply was submitted or updated
+         */
+        productVersion: string;
+        /**
+         * Content of the reply
+         */
+        replyText: string;
+        /**
+         * Id of the review, to which this reply belongs
+         */
+        reviewId: number;
+        /**
+         * Title of the reply
+         */
+        title: string;
+        /**
+         * Date the reply was submitted or updated
+         */
+        updatedDate: Date;
+        /**
+         * Id of the user who left the reply
+         */
+        userId: string;
+    }
     export interface ReviewsResult {
         /**
          * Flag indicating if there are more reviews to be shown (for paging)
@@ -18691,10 +18375,6 @@ declare module "VSS/Gallery/Contracts" {
          * Count of total review items
          */
         totalReviewCount: number;
-    }
-    export enum SigningKeyPermissions {
-        Read = 1,
-        Write = 2,
     }
     export enum SortByType {
         /**
@@ -18799,9 +18479,7 @@ declare module "VSS/Gallery/Contracts" {
                 "all": number;
             };
         };
-        AcquisitionOperation: {
-            fields: any;
-        };
+        AcquisitionOperation: any;
         AcquisitionOperationState: {
             enumValues: {
                 "disallow": number;
@@ -18819,28 +18497,8 @@ declare module "VSS/Gallery/Contracts" {
                 "none": number;
             };
         };
-        AcquisitionOptions: {
-            fields: any;
-        };
-        AzurePublisher: {
-            fields: any;
-        };
-        AzureRestApiRequestModel: {
-            fields: any;
-        };
-        AzureRestApiRequestOperationType: {
-            enumValues: {
-                "preview": number;
-                "production": number;
-                "hide": number;
-                "show": number;
-                "deletePreview": number;
-                "deleteProduction": number;
-            };
-        };
-        AzureRestApiResponseModel: {
-            fields: any;
-        };
+        AcquisitionOptions: any;
+        AzureRestApiResponseModel: any;
         ConcernCategory: {
             enumValues: {
                 "general": number;
@@ -18848,30 +18506,9 @@ declare module "VSS/Gallery/Contracts" {
                 "spam": number;
             };
         };
-        ExtensionAcquisitionRequest: {
-            fields: any;
-        };
-        ExtensionCategory: {
-            fields: any;
-        };
-        ExtensionFile: {
-            fields: any;
-        };
-        ExtensionFilterResult: {
-            fields: any;
-        };
-        ExtensionFilterResultMetadata: {
-            fields: any;
-        };
-        ExtensionIdentifier: {
-            fields: any;
-        };
-        ExtensionPackage: {
-            fields: any;
-        };
-        ExtensionPolicy: {
-            fields: any;
-        };
+        ExtensionAcquisitionRequest: any;
+        ExtensionFilterResult: any;
+        ExtensionPolicy: any;
         ExtensionPolicyFlags: {
             enumValues: {
                 "none": number;
@@ -18883,9 +18520,7 @@ declare module "VSS/Gallery/Contracts" {
                 "all": number;
             };
         };
-        ExtensionQuery: {
-            fields: any;
-        };
+        ExtensionQuery: any;
         ExtensionQueryFilterType: {
             enumValues: {
                 "tag": number;
@@ -18918,40 +18553,13 @@ declare module "VSS/Gallery/Contracts" {
                 "allAttributes": number;
             };
         };
-        ExtensionQueryResult: {
-            fields: any;
-        };
-        ExtensionShare: {
-            fields: any;
-        };
-        ExtensionStatistic: {
-            fields: any;
-        };
-        ExtensionStatisticOperation: {
-            enumValues: {
-                "none": number;
-                "set": number;
-                "increment": number;
-                "decrement": number;
-            };
-        };
-        ExtensionVersion: {
-            fields: any;
-        };
+        ExtensionQueryResult: any;
+        ExtensionVersion: any;
         ExtensionVersionFlags: {
             enumValues: {
                 "none": number;
                 "validated": number;
             };
-        };
-        FilterCriteria: {
-            fields: any;
-        };
-        InstallationTarget: {
-            fields: any;
-        };
-        MetadataItem: {
-            fields: any;
         };
         PagingDirection: {
             enumValues: {
@@ -18959,9 +18567,7 @@ declare module "VSS/Gallery/Contracts" {
                 "forward": number;
             };
         };
-        PublishedExtension: {
-            fields: any;
-        };
+        PublishedExtension: any;
         PublishedExtensionFlags: {
             enumValues: {
                 "none": number;
@@ -18976,15 +18582,9 @@ declare module "VSS/Gallery/Contracts" {
                 "preview": number;
             };
         };
-        Publisher: {
-            fields: any;
-        };
-        PublisherFacts: {
-            fields: any;
-        };
-        PublisherFilterResult: {
-            fields: any;
-        };
+        Publisher: any;
+        PublisherFacts: any;
+        PublisherFilterResult: any;
         PublisherFlags: {
             enumValues: {
                 "unChanged": number;
@@ -19010,16 +18610,7 @@ declare module "VSS/Gallery/Contracts" {
                 "deletePublisher": number;
             };
         };
-        PublisherQuery: {
-            fields: any;
-        };
-        PublisherQueryFilterType: {
-            enumValues: {
-                "tag": number;
-                "displayName": number;
-                "my": number;
-            };
-        };
+        PublisherQuery: any;
         PublisherQueryFlags: {
             enumValues: {
                 "none": number;
@@ -19027,12 +18618,8 @@ declare module "VSS/Gallery/Contracts" {
                 "includeEmailAddress": number;
             };
         };
-        PublisherQueryResult: {
-            fields: any;
-        };
-        QueryFilter: {
-            fields: any;
-        };
+        PublisherQueryResult: any;
+        QueryFilter: any;
         RestApiResponseStatus: {
             enumValues: {
                 "completed": number;
@@ -19041,12 +18628,8 @@ declare module "VSS/Gallery/Contracts" {
                 "skipped": number;
             };
         };
-        RestApiResponseStatusModel: {
-            fields: any;
-        };
-        Review: {
-            fields: any;
-        };
+        RestApiResponseStatusModel: any;
+        Review: any;
         ReviewFilterOptions: {
             enumValues: {
                 "none": number;
@@ -19054,24 +18637,15 @@ declare module "VSS/Gallery/Contracts" {
                 "filterEmptyUserNames": number;
             };
         };
-        ReviewPatch: {
-            fields: any;
-        };
+        ReviewPatch: any;
         ReviewPatchOperation: {
             enumValues: {
                 "flagReview": number;
                 "updateReview": number;
             };
         };
-        ReviewsResult: {
-            fields: any;
-        };
-        SigningKeyPermissions: {
-            enumValues: {
-                "read": number;
-                "write": number;
-            };
-        };
+        ReviewReply: any;
+        ReviewsResult: any;
         SortByType: {
             enumValues: {
                 "relevance": number;
@@ -19093,12 +18667,8 @@ declare module "VSS/Gallery/Contracts" {
                 "descending": number;
             };
         };
-        UserExtensionPolicy: {
-            fields: any;
-        };
-        UserReportedConcern: {
-            fields: any;
-        };
+        UserExtensionPolicy: any;
+        UserReportedConcern: any;
     };
 }
 declare module "VSS/Gallery/RestClient" {
@@ -19569,11 +19139,6 @@ declare module "VSS/Identities/Contracts" {
          */
         identityType: string;
     }
-    export enum IdentityMetaType {
-        Member = 0,
-        Guest = 1,
-        Unknown = 255,
-    }
     export interface IdentityScope {
         administrators: IdentityDescriptor;
         id: string;
@@ -19632,17 +19197,6 @@ declare module "VSS/Identities/Contracts" {
         scopeId: string;
         scopes: IdentityScope[];
     }
-    export enum IdentityTypeId {
-        WindowsIdentity = 3,
-        TeamFoundationIdentity = 4,
-        ClaimsIdentity = 5,
-        BindPendingIdentity = 6,
-        UnauthenticatedIdentity = 7,
-        ServiceIdentity = 8,
-        AggregateIdentity = 9,
-        ImportedIdentity = 10,
-        ServerTestIdentity = 100,
-    }
     export interface IdentityUpdateData {
         id: string;
         index: number;
@@ -19699,21 +19253,8 @@ declare module "VSS/Identities/Contracts" {
         tenantName: string;
     }
     export var TypeInfo: {
-        ChangedIdentities: {
-            fields: any;
-        };
-        ChangedIdentitiesContext: {
-            fields: any;
-        };
-        CreateGroupsInfo: {
-            fields: any;
-        };
-        CreateScopeInfo: {
-            fields: any;
-        };
-        FrameworkIdentityInfo: {
-            fields: any;
-        };
+        CreateScopeInfo: any;
+        FrameworkIdentityInfo: any;
         FrameworkIdentityType: {
             enumValues: {
                 "none": number;
@@ -19722,9 +19263,6 @@ declare module "VSS/Identities/Contracts" {
                 "importedIdentity": number;
             };
         };
-        GroupMembership: {
-            fields: any;
-        };
         GroupScopeType: {
             enumValues: {
                 "generic": number;
@@ -19732,25 +19270,8 @@ declare module "VSS/Identities/Contracts" {
                 "teamProject": number;
             };
         };
-        Identity: {
-            fields: any;
-        };
-        IdentityBatchInfo: {
-            fields: any;
-        };
-        IdentityDescriptor: {
-            fields: any;
-        };
-        IdentityMetaType: {
-            enumValues: {
-                "member": number;
-                "guest": number;
-                "unknown": number;
-            };
-        };
-        IdentityScope: {
-            fields: any;
-        };
+        IdentityBatchInfo: any;
+        IdentityScope: any;
         IdentitySearchFilter: {
             enumValues: {
                 "accountName": number;
@@ -19763,34 +19284,7 @@ declare module "VSS/Identities/Contracts" {
                 "domain": number;
             };
         };
-        IdentitySelf: {
-            fields: any;
-        };
-        IdentitySnapshot: {
-            fields: any;
-        };
-        IdentityTypeId: {
-            enumValues: {
-                "windowsIdentity": number;
-                "teamFoundationIdentity": number;
-                "claimsIdentity": number;
-                "bindPendingIdentity": number;
-                "unauthenticatedIdentity": number;
-                "serviceIdentity": number;
-                "aggregateIdentity": number;
-                "importedIdentity": number;
-                "serverTestIdentity": number;
-            };
-        };
-        IdentityUpdateData: {
-            fields: any;
-        };
-        JsonPatchOperationData: {
-            fields: any;
-        };
-        MruIdentitiesUpdateData: {
-            fields: any;
-        };
+        IdentitySnapshot: any;
         QueryMembership: {
             enumValues: {
                 "none": number;
@@ -19806,9 +19300,6 @@ declare module "VSS/Identities/Contracts" {
                 "filterIllegalMemberships": number;
             };
         };
-        ReadOnlyIdentityDescriptor: {
-            fields: any;
-        };
         SpecialGroupType: {
             enumValues: {
                 "generic": number;
@@ -19819,12 +19310,17 @@ declare module "VSS/Identities/Contracts" {
                 "azureActiveDirectoryApplicationGroup": number;
             };
         };
-        TenantInfo: {
-            fields: any;
-        };
     };
 }
 declare module "VSS/Identities/Mru/Contracts" {
+    /**
+     * ---------------------------------------------------------
+     * Generated file, DO NOT EDIT
+     * ---------------------------------------------------------
+     *
+     * See following wiki page for instructions on how to regenerate:
+     *   https://vsowiki.com/index.php?title=Rest_Client_Generation
+     */
     export interface JsonPatchOperationData<T> {
         op: string;
         path: string;
@@ -19832,14 +19328,6 @@ declare module "VSS/Identities/Mru/Contracts" {
     }
     export interface MruIdentitiesUpdateData extends JsonPatchOperationData<string[]> {
     }
-    export var TypeInfo: {
-        JsonPatchOperationData: {
-            fields: any;
-        };
-        MruIdentitiesUpdateData: {
-            fields: any;
-        };
-    };
 }
 declare module "VSS/Identities/Mru/RestClient" {
     import Contracts = require("VSS/Identities/Mru/Contracts");
@@ -19986,12 +19474,16 @@ declare module "VSS/Identities/Picker/Cache" {
         **/
         setPromise(request: string, promise: IPromise<T>): void;
         configure(config: IRequestCacheConfiguration): void;
+        /**
+        *   This method is not using Utils_Core.DelayedFunction on purpose.
+        *   The DelayedFunction is logging tracepoints and some tests use them for identifying if there are still actions left in a pending state.
+        *   We want to exempt the active cache invalidation from being waited upon by the tests.
+        **/
         private _setOrResetTimer();
         private _cache;
-        private _timer;
+        private _timeoutHandle;
         private _config;
         private static _defaultDelayIntervalMS;
-        private static _timerName;
     }
     /**
      * @exemptedapi
@@ -20334,7 +19826,7 @@ declare module "VSS/Identities/Picker/Controls" {
         **/
         leftValue?: number;
         /**
-        *   The left positioning offset of the dialog
+        *   The top positioning offset of the dialog
         **/
         topValue?: number;
         /**
@@ -20604,7 +20096,7 @@ declare module "VSS/Identities/Picker/Controls" {
         private _resolveInputToIdentities(input, queryTypeHint?, operationScope?);
         private _getIdentities(searchTerm);
         private _recalculateInputWidth();
-        private _replaceAndCleanup(email);
+        private _replaceAndCleanup(token);
         private _findInSelectedItems(object);
         private _showIdCardDialog(args);
         private _clearWatermark();
@@ -20774,7 +20266,7 @@ declare module "VSS/Identities/Picker/Controls" {
         getImagesForEntities(entities: Identities_Picker_RestClient.IEntity[], request?: IEntityOperationsFacadeRequest): IPromise<IDictionaryStringTo<string>>;
         /**
         *   This is the default way the controls internally fetch the key for disambiguating entities.
-        *   Use-cases apart from calls by the controls here are not supported; provided as a example of merging logic.
+        *   Use-cases apart from calls by the controls here are not supported; provided as an example of merging logic.
         **/
         private static _getMergingKeyFromEntity(entity);
         private static _mergeSimilarEntities(x, y, mergePreference?);
@@ -20839,9 +20331,6 @@ declare module "VSS/Identities/Picker/RestClient" {
         **/
         localDirectory?: string;
         localId?: string;
-        /**
-        *   Always set.
-        **/
         displayName?: string;
         scopeName?: string;
         department?: string;
@@ -20997,6 +20486,8 @@ declare module "VSS/Identities/Picker/Services" {
         static DefaultAadGroupImage: string;
         static VisualStudioDirectory: string;
         static AzureActiveDirectory: string;
+        static ActiveDirectory: string;
+        static WindowsMachineDirectory: string;
         static SourceDirectory: string;
         static UserEntity: string;
         static GroupEntity: string;
@@ -21010,7 +20501,7 @@ declare module "VSS/Identities/Picker/Services" {
         static ExtensionData_MaterializedAadGroupsOnlyItem: string;
         static GetIdentities_Prefix_Separator: string;
         /**
-        *   Currently supports only AAD, Source, AD and WMD (AAD for AAD-backed accounts, IMS for MSA accounts/on-premise TFS and AD and WMD for on-premise TFS)
+        *   Currently supports only AAD, IMS, Source, AD and WMD (AAD for AAD-backed accounts, IMS for MSA accounts/on-premise TFS and AD and WMD for on-premise TFS)
         **/
         static getOperationScopeList(operationScope: IOperationScope): string[];
         static getQueryTypeHint(queryTypeHint: IQueryTypeHint): string;
@@ -21071,7 +20562,7 @@ declare module "VSS/Identities/Picker/Services" {
         **/
         identityType?: IEntityType;
         /**
-        *   scope - one or more of AAD, IMS, Source
+        *   scope - one or more of AAD, IMS, Source, AD, WMD
         **/
         operationScope?: IOperationScope;
     }
@@ -21387,27 +20878,90 @@ declare module "VSS/Identities/RestClient" {
     export function getClient(options?: VSS_WebApi.IVssHttpClientOptions): IdentitiesHttpClient2_2;
 }
 declare module "VSS/Licensing/Contracts" {
-    export enum AccountLicenseType {
-        None = 0,
-        EarlyAdopter = 1,
-        Express = 2,
-        Professional = 3,
-        Advanced = 4,
-        Stakeholder = 5,
+    import VSS_Accounts_Contracts = require("VSS/Accounts/Contracts");
+    /**
+     * Represents a license granted to a user in an account
+     */
+    export interface AccountEntitlement {
+        /**
+         * Gets or sets the id of the account to which the license belongs
+         */
+        accountId: string;
+        /**
+         * Gets or sets the date the license was assigned
+         */
+        assignmentDate: Date;
+        /**
+         * Gets or sets the date of the user last sign-in to this account
+         */
+        lastAccessedDate: Date;
+        /**
+         * Gets or sets the  for the entitlement
+         */
+        license: License;
+        /**
+         * Gets or sets the id of the user to which the license belongs
+         */
+        userId: string;
+        userStatus: VSS_Accounts_Contracts.AccountUserStatus;
+    }
+    /**
+     * Model for updating an AccountEntitlement for a user, used for the Web API
+     */
+    export interface AccountEntitlementUpdateModel {
+        /**
+         * Gets or sets the license for the entitlement
+         */
+        license: License;
     }
     export interface ClientRightsContainer {
         certificateBytes: number[];
         token: string;
     }
+    /**
+     * Model for assigning an extension to users, used for the Web API
+     */
+    export interface ExtensionAssignment {
+        /**
+         * Gets or sets the extension ID to assign.
+         */
+        extensionGalleryId: string;
+        /**
+         * Gets or sets the licensing source.
+         */
+        licensingSource: LicensingSource;
+        /**
+         * Gets or sets the user IDs to assign the extension to.
+         */
+        userIds: string[];
+    }
     export enum ExtensionFilterOptions {
         None = 1,
         Bundle = 2,
         AccountAssignment = 4,
-        All = 7,
+        ImplicitAssignment = 8,
+        All = -1,
     }
     export enum ExtensionOperation {
         Assign = 0,
         Unassign = 1,
+    }
+    export interface ExtensionOperationResult {
+        accountId: string;
+        extensionId: string;
+        message: string;
+        operation: ExtensionOperation;
+        result: OperationResult;
+        userId: string;
+    }
+    /**
+     * The base class for a specific license source and license
+     */
+    export interface License {
+        /**
+         * Gets the source of the license
+         */
+        source: LicensingSource;
     }
     export enum LicensingSource {
         None = 0,
@@ -21415,16 +20969,6 @@ declare module "VSS/Licensing/Contracts" {
         Msdn = 2,
         Profile = 3,
         Auto = 4,
-    }
-    export enum MsdnLicenseType {
-        None = 0,
-        Eligible = 1,
-        Professional = 2,
-        Platforms = 3,
-        TestProfessional = 4,
-        Premium = 5,
-        Ultimate = 6,
-        Enterprise = 7,
     }
     export enum OperationResult {
         Success = 0,
@@ -21454,24 +20998,15 @@ declare module "VSS/Licensing/Contracts" {
         Stakeholder = 4,
     }
     export var TypeInfo: {
-        AccountLicenseType: {
-            enumValues: {
-                "none": number;
-                "earlyAdopter": number;
-                "express": number;
-                "professional": number;
-                "advanced": number;
-                "stakeholder": number;
-            };
-        };
-        ClientRightsContainer: {
-            fields: any;
-        };
+        AccountEntitlement: any;
+        AccountEntitlementUpdateModel: any;
+        ExtensionAssignment: any;
         ExtensionFilterOptions: {
             enumValues: {
                 "none": number;
                 "bundle": number;
                 "accountAssignment": number;
+                "implicitAssignment": number;
                 "all": number;
             };
         };
@@ -21481,6 +21016,8 @@ declare module "VSS/Licensing/Contracts" {
                 "unassign": number;
             };
         };
+        ExtensionOperationResult: any;
+        License: any;
         LicensingSource: {
             enumValues: {
                 "none": number;
@@ -21488,18 +21025,6 @@ declare module "VSS/Licensing/Contracts" {
                 "msdn": number;
                 "profile": number;
                 "auto": number;
-            };
-        };
-        MsdnLicenseType: {
-            enumValues: {
-                "none": number;
-                "eligible": number;
-                "professional": number;
-                "platforms": number;
-                "testProfessional": number;
-                "premium": number;
-                "ultimate": number;
-                "enterprise": number;
             };
         };
         OperationResult: {
@@ -21519,6 +21044,142 @@ declare module "VSS/Licensing/Contracts" {
             };
         };
     };
+}
+declare module "VSS/Licensing/RestClient" {
+    import Contracts = require("VSS/Licensing/Contracts");
+    import VSS_Common_Contracts = require("VSS/WebApi/Contracts");
+    import VSS_WebApi = require("VSS/WebApi/RestClient");
+    export class CommonMethods2To3 extends VSS_WebApi.VssHttpClient {
+        protected certificateApiVersion: string;
+        protected clientRightsApiVersion: string;
+        protected extensionRegistrationApiVersion: string;
+        protected extensionRightsApiVersion: string;
+        protected serviceRightsApiVersion: string;
+        protected usageApiVersion: string;
+        protected usageRightsApiVersion: string;
+        constructor(rootRequestPath: string, options?: VSS_WebApi.IVssHttpClientOptions);
+        /**
+         * [Preview API]
+         *
+         * @param {string} rightName
+         * @return IPromise<void>
+         */
+        getUsageRights(rightName?: string): IPromise<void>;
+        /**
+         * [Preview API]
+         *
+         * @return IPromise<void>
+         */
+        getAccountLicensesUsage(): IPromise<void>;
+        /**
+         * [Preview API]
+         *
+         * @param {string} rightName
+         * @return IPromise<void>
+         */
+        getServiceRights(rightName?: string): IPromise<void>;
+        /**
+         * [Preview API]
+         *
+         * @param {string[]} ids
+         * @return IPromise<{ [key: string] : boolean; }>
+         */
+        computeExtensionRights(ids: string[]): IPromise<{
+            [key: string]: boolean;
+        }>;
+        /**
+         * [Preview API]
+         *
+         * @param {VSS_Common_Contracts.ExtensionLicenseData} extensionLicenseData
+         * @return IPromise<boolean>
+         */
+        registerExtensionLicense(extensionLicenseData: VSS_Common_Contracts.ExtensionLicenseData): IPromise<boolean>;
+        /**
+         * [Preview API]
+         *
+         * @param {string} extensionId
+         * @return IPromise<VSS_Common_Contracts.ExtensionLicenseData>
+         */
+        getExtensionLicenseData(extensionId: string): IPromise<VSS_Common_Contracts.ExtensionLicenseData>;
+        /**
+         * [Preview API]
+         *
+         * @param {string} rightName
+         * @param {string} productVersion
+         * @param {string} edition
+         * @param {string} relType
+         * @param {boolean} includeCertificate
+         * @param {string} canary
+         * @param {string} machineId
+         * @return IPromise<void>
+         */
+        getClientRights(rightName?: string, productVersion?: string, edition?: string, relType?: string, includeCertificate?: boolean, canary?: string, machineId?: string): IPromise<void>;
+        /**
+         * [Preview API]
+         *
+         * @return IPromise<void>
+         */
+        getCertificate(): IPromise<void>;
+    }
+    /**
+     * @exemptedapi
+     */
+    export class LicensingHttpClient3 extends CommonMethods2To3 {
+        constructor(rootRequestPath: string, options?: VSS_WebApi.IVssHttpClientOptions);
+        /**
+         * [Preview API] Assigns the access to the given extension for all eligible users in the account that do not already have access to the extension though bundle or account assignment
+         *
+         * @param {string} extensionId - The extension id to assign the access to.
+         * @return IPromise<Contracts.ExtensionOperationResult[]>
+         */
+        assignExtensionToAllEligibleUsers(extensionId: string): IPromise<Contracts.ExtensionOperationResult[]>;
+        /**
+         * [Preview API] Returns users that are currently eligible to assign the extension to. the list is filtered based on the value of ExtensionFilterOptions
+         *
+         * @param {string} extensionId - The extension to check the eligibility of the users for.
+         * @param {Contracts.ExtensionFilterOptions} options - The options to filter the list.
+         * @return IPromise<string[]>
+         */
+        getEligibleUsersForExtension(extensionId: string, options: Contracts.ExtensionFilterOptions): IPromise<string[]>;
+        /**
+         * [Preview API] Assigns the access to the given extension for a given list of users
+         *
+         * @param {Contracts.ExtensionAssignment} body - The extension assignment details.
+         * @return IPromise<Contracts.ExtensionOperationResult[]>
+         */
+        assignExtensionToUsers(body: Contracts.ExtensionAssignment): IPromise<Contracts.ExtensionOperationResult[]>;
+        /**
+         * [Preview API] Returns extensions that are currently assigned to the user in the account
+         *
+         * @param {string} userId - The user's identity id.
+         * @return IPromise<{ [key: string] : Contracts.LicensingSource; }>
+         */
+        getExtensionsAssignedToUser(userId: string): IPromise<{
+            [key: string]: Contracts.LicensingSource;
+        }>;
+        /**
+         * [Preview API] Revokes the access to the given extension for a given list of users
+         *
+         * @param {Contracts.ExtensionAssignment} body - The extension assignment details.
+         * @return IPromise<Contracts.ExtensionOperationResult[]>
+         */
+        unassignExtensionFromUsers(body: Contracts.ExtensionAssignment): IPromise<Contracts.ExtensionOperationResult[]>;
+    }
+    /**
+     * @exemptedapi
+     */
+    export class LicensingHttpClient2_2 extends CommonMethods2To3 {
+        constructor(rootRequestPath: string, options?: VSS_WebApi.IVssHttpClientOptions);
+    }
+    export class LicensingHttpClient extends LicensingHttpClient3 {
+        constructor(rootRequestPath: string, options?: VSS_WebApi.IVssHttpClientOptions);
+    }
+    /**
+     * Gets an http client targeting the latest released version of the APIs.
+     *
+     * @return LicensingHttpClient2_2
+     */
+    export function getClient(options?: VSS_WebApi.IVssHttpClientOptions): LicensingHttpClient2_2;
 }
 declare module "VSS/Locations" {
     import Contracts_Platform = require("VSS/Common/Contracts/Platform");
@@ -21684,7 +21345,7 @@ declare module "VSS/Locations/Contracts" {
          */
         authorizedUser: VSS_Identities_Contracts.Identity;
         /**
-         * The instance id for this server.
+         * The instance id for this host.
          */
         instanceId: string;
         /**
@@ -21789,12 +21450,7 @@ declare module "VSS/Locations/Contracts" {
         Moving = 2,
     }
     export var TypeInfo: {
-        AccessMapping: {
-            fields: any;
-        };
-        ConnectionData: {
-            fields: any;
-        };
+        ConnectionData: any;
         InheritLevel: {
             enumValues: {
                 "none": number;
@@ -21804,12 +21460,7 @@ declare module "VSS/Locations/Contracts" {
                 "all": number;
             };
         };
-        LocationMapping: {
-            fields: any;
-        };
-        LocationServiceData: {
-            fields: any;
-        };
+        LocationServiceData: any;
         RelativeToSetting: {
             enumValues: {
                 "context": number;
@@ -21817,9 +21468,7 @@ declare module "VSS/Locations/Contracts" {
                 "fullyQualified": number;
             };
         };
-        ServiceDefinition: {
-            fields: any;
-        };
+        ServiceDefinition: any;
         ServiceStatus: {
             enumValues: {
                 "assigned": number;
@@ -22072,12 +21721,8 @@ declare module "VSS/Operations/Contracts" {
         Failed = 5,
     }
     export var TypeInfo: {
-        Operation: {
-            fields: any;
-        };
-        OperationReference: {
-            fields: any;
-        };
+        Operation: any;
+        OperationReference: any;
         OperationStatus: {
             enumValues: {
                 "notSet": number;
@@ -22206,6 +21851,11 @@ declare module "VSS/Organization/CollectionRestClient" {
     export function getClient(options?: VSS_WebApi.IVssHttpClientOptions): CollectionHttpClient3;
 }
 declare module "VSS/Organization/Contracts" {
+    export enum AssignmentStatus {
+        Unassignable = 0,
+        Assignable = 10,
+        Assigned = 20,
+    }
     export interface Collection {
         data: {
             [key: string]: any;
@@ -22221,6 +21871,7 @@ declare module "VSS/Organization/Contracts" {
          */
         name: string;
         owner: string;
+        preferredRegion: string;
         /**
          * Extended properties
          */
@@ -22238,6 +21889,11 @@ declare module "VSS/Organization/Contracts" {
         Enabled = 20,
         LogicallyDeleted = 30,
         MarkedForPhysicalDelete = 40,
+    }
+    export enum HostCreationType {
+        None = 0,
+        PreCreated = 1,
+        OnDemand = 2,
     }
     export interface Organization {
         collections: Collection[];
@@ -22271,9 +21927,14 @@ declare module "VSS/Organization/Contracts" {
         Work = 2,
     }
     export var TypeInfo: {
-        Collection: {
-            fields: any;
+        AssignmentStatus: {
+            enumValues: {
+                "unassignable": number;
+                "assignable": number;
+                "assigned": number;
+            };
         };
+        Collection: any;
         CollectionSearchKind: {
             enumValues: {
                 "unknown": number;
@@ -22290,9 +21951,14 @@ declare module "VSS/Organization/Contracts" {
                 "markedForPhysicalDelete": number;
             };
         };
-        Organization: {
-            fields: any;
+        HostCreationType: {
+            enumValues: {
+                "none": number;
+                "preCreated": number;
+                "onDemand": number;
+            };
         };
+        Organization: any;
         OrganizationSearchKind: {
             enumValues: {
                 "unknown": number;
@@ -22587,13 +22253,6 @@ declare module "VSS/Profile/Contracts" {
     }
     export interface CoreProfileAttribute extends ProfileAttributeBase<any> {
     }
-    export enum CoreProfileAttributes {
-        Minimal = 0,
-        Email = 1,
-        Avatar = 2,
-        DisplayName = 4,
-        All = 65535,
-    }
     export interface Country {
         code: string;
         englishName: string;
@@ -22635,12 +22294,6 @@ declare module "VSS/Profile/Contracts" {
         CreateIDE = 2,
         Review = 3,
         AvatarImageFormat = 4,
-    }
-    export enum ProfilePropertyType {
-        DisplayName = 0,
-        EmailAddress = 1,
-        PublicAlias = 2,
-        Country = 3,
     }
     /**
      * Country/region information
@@ -22690,21 +22343,14 @@ declare module "VSS/Profile/Contracts" {
         id: string;
     }
     export var TypeInfo: {
-        AttributeDescriptor: {
-            fields: any;
-        };
-        AttributesContainer: {
-            fields: any;
-        };
+        AttributesContainer: any;
         AttributesScope: {
             enumValues: {
                 "core": number;
                 "application": number;
             };
         };
-        Avatar: {
-            fields: any;
-        };
+        Avatar: any;
         AvatarSize: {
             enumValues: {
                 "small": number;
@@ -22712,36 +22358,10 @@ declare module "VSS/Profile/Contracts" {
                 "large": number;
             };
         };
-        CoreProfileAttribute: {
-            fields: any;
-        };
-        CoreProfileAttributes: {
-            enumValues: {
-                "minimal": number;
-                "email": number;
-                "avatar": number;
-                "displayName": number;
-                "all": number;
-            };
-        };
-        Country: {
-            fields: any;
-        };
-        CreateProfileContext: {
-            fields: any;
-        };
-        GeoRegion: {
-            fields: any;
-        };
-        Profile: {
-            fields: any;
-        };
-        ProfileAttribute: {
-            fields: any;
-        };
-        ProfileAttributeBase: {
-            fields: any;
-        };
+        CoreProfileAttribute: any;
+        Profile: any;
+        ProfileAttribute: any;
+        ProfileAttributeBase: any;
         ProfilePageType: {
             enumValues: {
                 "update": number;
@@ -22751,29 +22371,8 @@ declare module "VSS/Profile/Contracts" {
                 "avatarImageFormat": number;
             };
         };
-        ProfilePropertyType: {
-            enumValues: {
-                "displayName": number;
-                "emailAddress": number;
-                "publicAlias": number;
-                "country": number;
-            };
-        };
-        ProfileRegion: {
-            fields: any;
-        };
-        ProfileRegions: {
-            fields: any;
-        };
-        ProfileTermsOfService: {
-            fields: any;
-        };
-        UserTermsOfService: {
-            fields: any;
-        };
-        VerifyPreferredEmailContext: {
-            fields: any;
-        };
+        ProfileTermsOfService: any;
+        UserTermsOfService: any;
     };
 }
 declare module "VSS/Profile/Metrics" {
@@ -23232,7 +22831,7 @@ declare module "VSS/SDK/Services/Dialogs" {
 }
 declare module "VSS/SDK/Services/ExtensionData" {
     import Contracts_Platform = require("VSS/Common/Contracts/Platform");
-    import ExtensionManagement_Contracts = require("VSS/ExtensionManagement/Contracts");
+    import Contributions_Contracts = require("VSS/Contributions/Contracts");
     /**
     * Provides a wrapper around the REST client for getting and saving extension setting values
     * @serviceId "vss.extensionSettings"
@@ -23341,13 +22940,13 @@ declare module "VSS/SDK/Services/ExtensionData" {
         *
         * @param collections The list of collections to query. Assumes Default Scope Type and Current Scope Value
         */
-        queryCollectionNames(collectionNames: string[]): IPromise<ExtensionManagement_Contracts.ExtensionDataCollection[]>;
+        queryCollectionNames(collectionNames: string[]): IPromise<Contributions_Contracts.ExtensionDataCollection[]>;
         /**
         * Returns a promise for querying a set of collections
         *
         * @param collections The list of collections to query. Each collection will contain its collectionName, scopeType, and scopeValue
         */
-        queryCollections(collections: ExtensionManagement_Contracts.ExtensionDataCollection[]): IPromise<ExtensionManagement_Contracts.ExtensionDataCollection[]>;
+        queryCollections(collections: Contributions_Contracts.ExtensionDataCollection[]): IPromise<Contributions_Contracts.ExtensionDataCollection[]>;
         private _checkDocument(document);
         private _checkDocumentOptions(documentOptions);
         private _createDictionaryForArray(docs);
@@ -23794,15 +23393,7 @@ declare module "VSS/SecurityRoles/Contracts" {
                 "inherited": number;
             };
         };
-        RoleAssignment: {
-            fields: any;
-        };
-        SecurityRole: {
-            fields: any;
-        };
-        UserRoleAssignmentRef: {
-            fields: any;
-        };
+        RoleAssignment: any;
     };
 }
 declare module "VSS/SecurityRoles/RestClient" {
@@ -23888,6 +23479,14 @@ declare module "VSS/SecurityRoles/RestClient" {
     export function getClient(options?: VSS_WebApi.IVssHttpClientOptions): SecurityRolesHttpClient2_2;
 }
 declare module "VSS/Security/Contracts" {
+    /**
+     * ---------------------------------------------------------
+     * Generated file, DO NOT EDIT
+     * ---------------------------------------------------------
+     *
+     * See following wiki page for instructions on how to regenerate:
+     *   https://vsowiki.com/index.php?title=Rest_Client_Generation
+     */
     import VSS_Identities_Contracts = require("VSS/Identities/Contracts");
     /**
      * Class for encapsulating the allowed and denied permissions for a given IdentityDescriptor.
@@ -24164,62 +23763,6 @@ declare module "VSS/Security/Contracts" {
          */
         recurse: boolean;
     }
-    export var TypeInfo: {
-        AccessControlEntry: {
-            fields: any;
-        };
-        AccessControlList: {
-            fields: any;
-        };
-        AccessControlListsCollection: {
-            fields: any;
-        };
-        AceExtendedInformation: {
-            fields: any;
-        };
-        ActionDefinition: {
-            fields: any;
-        };
-        PermissionEvaluation: {
-            fields: any;
-        };
-        PermissionEvaluationBatch: {
-            fields: any;
-        };
-        RemoteBackingStoreAccessControlEntry: {
-            fields: any;
-        };
-        RemoveAccessControlListsRequest: {
-            fields: any;
-        };
-        RemovePermissionsRequest: {
-            fields: any;
-        };
-        RenameTokensRequest: {
-            fields: any;
-        };
-        SecurityNamespaceData: {
-            fields: any;
-        };
-        SecurityNamespaceDescription: {
-            fields: any;
-        };
-        SetAccessControlEntriesInfo: {
-            fields: any;
-        };
-        SetAccessControlListsRequest: {
-            fields: any;
-        };
-        SetInheritFlagInfo: {
-            fields: any;
-        };
-        SetPermissionsRequest: {
-            fields: any;
-        };
-        TokenRename: {
-            fields: any;
-        };
-    };
 }
 declare module "VSS/Security/RestClient" {
     import Contracts = require("VSS/Security/Contracts");
@@ -24620,18 +24163,13 @@ declare module "VSS/Telemetry/Contracts" {
         validTo: Date;
     }
     export var TypeInfo: {
-        CustomerIntelligenceEvent: {
-            fields: any;
-        };
         DelegatedAppTokenType: {
             enumValues: {
                 "session": number;
                 "app": number;
             };
         };
-        WebSessionToken: {
-            fields: any;
-        };
+        WebSessionToken: any;
     };
 }
 declare module "VSS/Telemetry/RestClient" {
@@ -25952,6 +25490,10 @@ declare module "VSS/Utils/UI" {
              */
             baseAlignmentMarker?: JQuery;
             /**
+             * Indicates whether the scroll should by browser window or the specified marker or not.
+             */
+            scrollByMarker?: boolean;
+            /**
              * how much extra left offset (if any) should be given to the target element versus the reference element.
              */
             leftOffsetPixels?: Number;
@@ -26624,6 +26166,14 @@ declare module "VSS/WebApi/Contracts" {
          * Includes the last user access for this host.
          */
         IncludeLastUserAccess = 2,
+        /**
+         * This is only valid on the deployment host and when true. Will only return inherited definitions.
+         */
+        IncludeInheritedDefinitionsOnly = 4,
+        /**
+         * When true will only return non inherited definitions. Only valid at non-deployment host.
+         */
+        IncludeNonInheritedDefinitionsOnly = 8,
     }
     export interface ExtensionLicenseData {
         createdDate: Date;
@@ -26753,34 +26303,17 @@ declare module "VSS/WebApi/Contracts" {
         typeName: string;
     }
     export var TypeInfo: {
-        ApiResourceLocation: {
-            fields: any;
-        };
-        ApiResourceVersion: {
-            fields: any;
-        };
         ConnectOptions: {
             enumValues: {
                 "none": number;
                 "includeServices": number;
                 "includeLastUserAccess": number;
+                "includeInheritedDefinitionsOnly": number;
+                "includeNonInheritedDefinitionsOnly": number;
             };
         };
-        ExtensionLicenseData: {
-            fields: any;
-        };
-        IdentityRef: {
-            fields: any;
-        };
-        JsonPatchDocument: {
-            fields: any;
-        };
-        JsonPatchOperation: {
-            fields: any;
-        };
-        JsonWebToken: {
-            fields: any;
-        };
+        ExtensionLicenseData: any;
+        JsonPatchOperation: any;
         JWTAlgorithm: {
             enumValues: {
                 "none": number;
@@ -26797,30 +26330,6 @@ declare module "VSS/WebApi/Contracts" {
                 "copy": number;
                 "test": number;
             };
-        };
-        Publisher: {
-            fields: any;
-        };
-        ReferenceLink: {
-            fields: any;
-        };
-        ResourceRef: {
-            fields: any;
-        };
-        ServiceEvent: {
-            fields: any;
-        };
-        VssJsonCollectionWrapper: {
-            fields: any;
-        };
-        VssJsonCollectionWrapperV: {
-            fields: any;
-        };
-        VssJsonCollectionWrapperBase: {
-            fields: any;
-        };
-        WrappedException: {
-            fields: any;
         };
     };
 }
@@ -26925,6 +26434,14 @@ declare module "VSS/WebApi/RestClient" {
         * Request timeout in milliseconds. The default is 5 minutes.
         */
         timeout?: number;
+        /**
+         * Current session id. Defaults to pageContext.diagnostics.sessionId.
+         */
+        sessionId?: string;
+        /**
+         * Current command for activity logging.
+         */
+        command?: string;
     }
     /**
     * Base class that should be used (derived from) to make requests to VSS REST apis

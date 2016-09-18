@@ -37,6 +37,7 @@
     <Content Include="indexWidget.html" />
     <Content Include="Licence\MIT-1.txt" />
     <Content Include="scripts\VSS.SDK.js" />
+    <Content Include="scripts\VSS.SDK.min.js" />
     <Content Include="scrumMeeting.html" />
     <Content Include="readme.md" />
   </ItemGroup>
