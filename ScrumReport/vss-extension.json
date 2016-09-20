@@ -1,10 +1,10 @@
 {
   "manifestVersion": 1,
-  "version": "1.9.2",
-  "Id": "VSO-Scrum-Report",
-  "name": "Scrum Report",
+  "version": "",
+  "Id": "",
+  "name": "",
   "description": "Keep track with the team's progress with a scrum report.",
-  "publisher": "MikaelAndVlatko",
+  "publisher": "",
   "public": true,
   "provider": {
     "name": "Mikael Krief and Vlatko Ivanovski"
