@@ -28,6 +28,7 @@ import Grids = require("VSS/Controls/Grids");
 import Q = require("q");
 
 
+
 export class ScrumReport {
 
     constructor() {
@@ -81,13 +82,16 @@ export class ScrumReport {
                 
                     if (r.message.indexOf("TF401243") == 0) {//if the query is not created
                         //TODO: if the query is not created => create the query
-                     
+
                         var newscrumreport = new ScrumReport();
                         newscrumreport.CreateQuery(waitIndicator);
                         document.getElementById("content").innerHTML = "<strong>The query 'Scrum Report' as created in the root on Shared Queries folder.<br />Refresh this page for view the result.</strong>";
                         if (waitIndicator != undefined) {
                             waitIndicator.endWait();
                         }
+                    } else {
+
+                        TelemetryClient.getClient().trackException(r.message);
                     }
                 });
         });
@@ -128,6 +132,7 @@ export class ScrumReport {
                 ,
                 function (f) {
                     document.getElementById("content").innerHTML = "Error the query is not found :<br />Create the query 'Scrum Report' on the root on Shared Queries folder";
+                    
                     if (waitIndicator != undefined) {
                         waitIndicator.endWait();
                     }
@@ -158,7 +163,7 @@ export class ScrumReport {
         }, function (r) {
             //here the message that indicate no results
             document.getElementById("content").innerHTML = "There is no information for the current Report for this day.";
-
+           
             if (waitIndicator != undefined) {
                 waitIndicator.endWait();
             }
@@ -186,6 +191,7 @@ export class ScrumReport {
         }, function (r) {
             //here the message that indicate no results
             document.getElementById("content").innerHTML = "There is no information for the current Report for this day.";
+            TelemetryClient.getClient().trackException(r.message);
         });
         return deferred.promise;
     }
@@ -205,6 +211,8 @@ export class ScrumReport {
     public Load(waitIndicator: any) {
         var me = this;
 
+        TelemetryClient.getClient().trackPageView("Index");
+
 
         me.listeIdWi = me.GetListWiId(waitIndicator);
 
@@ -213,20 +221,6 @@ export class ScrumReport {
             var tm: string[] = values[0];
             var avatars: Core_Contacts.IdentityRef[] = values[1];
             var states: string[] = values[2];
-           
-            //Filter by state
-            /*var wiState: string[];
-            switch (me.projectTemplate) {
-                case "Scrum":
-                    wiState = ["Done", "In Progress", "New", "Open"]; //Open for Impediment
-                    break;
-                case "Agile":
-                    wiState = ["Closed", "Active", "New"];
-                    break;
-                case "CMMI":
-                    wiState = ["Closed", "Active", "Proposed"];
-                    break;
-            }*/
 
             me.listeIdWi.then((wiRef: Work_WorkItemTrackingContracts.WorkItem[]) => {
                 var resultHTML: string = "";
@@ -332,6 +326,7 @@ export class ScrumReport {
         },
             function (r) {
                 console.log(r);
+                TelemetryClient.getClient().trackException(r.message);
             }
         );
     }
@@ -339,6 +334,9 @@ export class ScrumReport {
 
     public LoadWidget() {
         var me = this;
+
+        TelemetryClient.getClient().trackPageView("Widget");
+
         me.GetProjectTemplate().then((pt: string) => {
             me.projectTemplate = pt;
         });
@@ -424,6 +422,7 @@ export class ScrumReport {
         },
             function (r) {
                 console.log(r);
+                TelemetryClient.getClient().trackException(r.message);
             }
         );
     }
