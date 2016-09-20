@@ -24,7 +24,7 @@ var TelemetryClient = (function () {
         try {
             var snippet = {
                 config: {
-                    instrumentationKey: "25481b09-386f-4edc-b672-b33ebcda49cd",
+                    instrumentationKey: "__INSTRUMENTATIONKEY__",
                 }
             };
             var x = VSS.getExtensionContext();
@@ -102,5 +102,5 @@ var TelemetryClient = (function () {
         }
     };
     return TelemetryClient;
-})();
+}());
 //# sourceMappingURL=TelemetryClient.js.map
